@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>マイページ</title>
+    <style>
+      body {
+        margin: 0;
+        background: #000;
+        color: #000;
+        font-family: 'Noto Sans JP', sans-serif;
+      }
+      .header {
+        background: #ddd;
+        padding: 40px 0 20px 0;
+        text-align: center;
+        font-size: 2.5rem;
+        font-weight: bold;
+        letter-spacing: 0.05em;
+      }
+      .divider {
+        height: 2px;
+        background: #fff;
+        margin: 0;
+      }
+      .container {
+        padding: 40px 0 0 0;
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        min-height: 100vh;
+      }
+      .filter-btn {
+        background: #fff;
+        color: #888;
+        border-radius: 4px;
+        padding: 8px 18px;
+        margin-left: 40px;
+        font-size: 1.1rem;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.08);
+        border: none;
+        display: inline-block;
+      }
+      .bar-graph {
+        display: flex;
+        justify-content: center;
+        align-items: flex-end;
+        height: 220px;
+        margin: 80px auto 0 auto;
+        width: 80%;
+        max-width: 350px;
+        gap: 22px;
+      }
+      .bar {
+        width: 16px;
+        height: 200px;
+        background: #ff7300;
+        border-radius: 4px 4px 0 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="header">マイページ</div>
+    <div class="divider"></div>
+    <div class="container">
+      <button class="filter-btn">科目別 / 日別</button>
+      <div class="bar-graph">
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+        <div class="bar"></div>
+      </div>
+    </div>
+  </body>
+</html>
