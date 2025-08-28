@@ -40,6 +40,9 @@ const Login = () => {
               onChangeText={setUsername}
               style={styles.input}
               placeholder="Username"
+              autoCapitalize="none"
+              keyboardType="email-address"
+              textContentType="emailAddress"
             />
           </View>
           <View style={styles.inputFlame}>
@@ -53,6 +56,8 @@ const Login = () => {
               style={styles.input}
               placeholder="Password"
               secureTextEntry // パスワード入力用に追記するとより良い
+              autoCapitalize="none"
+              textContentType="password"
             />
           </View>
           <Button onPress={handleLoginPress} label="ログイン" />

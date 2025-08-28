@@ -39,6 +39,9 @@ const Signin = () => {
             onChangeText={setUsername}
             style={styles.input}
             placeholder="Username"
+            autoCapitalize="none"
+            keyboardType="email-address"
+            textContentType="emailAddress"
           />
         </View>
         <View style={styles.inputFlame}>
@@ -49,6 +52,8 @@ const Signin = () => {
             style={styles.input}
             placeholder="Password"
             secureTextEntry // パスワード入力用に追記するとより良い(隠すやつ)
+            autoCapitalize="none"
+            textContentType="password"
           />
         </View>
         <Button label="新規登録" />
