@@ -2,10 +2,10 @@ import {View, Text, StyleSheet} from 'react-native'
 
 //いったんこのJSXエラーは無視！！
 type HeaderProps = {
-    label: string;
+    label?: string;
 }
 
-const Header = ({label}: HeaderProps): JSX.Element => {
+const Header = ({label}: HeaderProps) => {
     return (
         <View>
             <Text style={styles.text}>{label}</Text>
@@ -16,15 +16,13 @@ const Header = ({label}: HeaderProps): JSX.Element => {
 //StyleSheet.createというメソッドがオブジェクトを受け取って、cssを適用するものなので、必須
 const styles = StyleSheet.create({
     text: {
-        flex: 0,
+        height: 60,
         width: '100%',
         textAlign: 'center',
         color: 'white',
         backgroundColor: 'orange',
         fontSize: 40,
         fontWeight: 'bold',
-        paddingTop: 24,
-        paddingBottom: 16,
     }
 })
 

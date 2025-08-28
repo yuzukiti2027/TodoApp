@@ -1,0 +1,168 @@
+import {
+  Pressable,
+  View,
+  Text,
+  StyleSheet,
+  TextInput,
+  Image,
+  SafeAreaView,
+} from "react-native";
+import { useState } from "react";
+import { useRouter } from "expo-router";
+import { SafeAreaProvider } from "react-native-safe-area-context";
+import Header from "../../components/Header";
+// import Footer from "../../components/Footer";
+
+const Login = () => {
+  const [username, setUsername] = useState<string>("");
+  const [password, setPassword] = useState<string>("");
+  const router = useRouter();
+
+  const handleLoginPress = () => {};
+
+  const handleSignInPress = () => {
+    router.push("../Signin/Signin");
+  };
+
+  return (
+    // ここを <View> から <SafeAreaView> に変更！
+    <SafeAreaProvider>
+      <SafeAreaView style={styles.container}>
+        <Header />
+        <View style={styles.content}>
+          <View style={styles.titleFlame}>
+            <Text style={styles.titleText}>勉強アプリ</Text>
+            <Text style={styles.titleText}>ログイン</Text>
+          </View>
+          <View style={styles.inputFlame}>
+            <Image
+              source={require("../../../assets/kkrn_icon_user_13.png")}
+              style={styles.image}
+            />
+            <TextInput
+              value={username}
+              onChangeText={setUsername}
+              style={styles.input}
+              placeholder="Username"
+            />
+          </View>
+          <View style={styles.inputFlame}>
+            <Image
+              source={require("../../../assets/kkrn_icon_kagi_21.png")}
+              style={styles.image}
+            />
+            <TextInput
+              value={password}
+              onChangeText={setPassword}
+              style={styles.input}
+              placeholder="Password"
+              secureTextEntry // パスワード入力用に追記するとより良い
+            />
+          </View>
+          <Pressable  onPress={handleLoginPress} style={styles.button}>
+            <Text style={styles.buttonLabel}>
+              ログイン
+            </Text>
+          </Pressable>
+          <View style={styles.ToSignIn}>
+            <Text>アカウントをお持ちでないですか？</Text>
+            <Pressable onPress={handleSignInPress}>
+              <Text style={styles.SignInLink}>新規登録</Text>
+            </Pressable>
+          </View>
+        </View>
+      </SafeAreaView>
+    </SafeAreaProvider>
+  );
+};
+
+//StyleSheet.createというメソッドがオブジェクトを受け取って、cssを適用するものなので、必須
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    justifyContent: "space-between", //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
+    backgroundColor: "white",
+  },
+  content: {
+    flex: 1,
+    gap: 32, // 要素間のスペースを設定
+    alignItems: "center",
+    justifyContent: "flex-start",
+  },
+  titleFlame: {
+    marginTop: 56,
+  },
+  titleText: {
+    fontSize: 40,
+    textAlign: "center",
+    color: "#8b8b8bff",
+  },
+  inputFlame: {
+    height: 56,
+    width: "80%",
+    flexDirection: "row",
+    borderColor: "gray",
+    borderWidth: 1,
+    borderRadius: 8, //角を丸くする
+  },
+  image: {
+    // borderColor: 'gray',
+    // borderWidth: 1,
+    marginTop: 3,
+    marginLeft: 8,
+    width: 50,
+    height: 50,
+  },
+  input: {
+    // borderColor: 'gray',
+    // borderWidth: 1,
+    flex: 1,
+    width: "72%",
+    height: 56,
+    paddingHorizontal: 8, //左右のpadding
+    fontSize: 20,
+  },
+  text: {
+    color: "white",
+    backgroundColor: "blue",
+    fontSize: 40,
+    fontWeight: "bold",
+    padding: 16,
+  },
+  button: {
+    width: "30%",
+    height: 45,
+    borderRadius: 8,
+    backgroundColor: "orange",
+    justifyContent: "center",
+    textAlign: "right",
+    position: "relative",
+    bottom: 0, // フッターの上に配置
+    left: 95, // 中央に配置
+  },
+  buttonLabel: {
+    textAlign: "center",
+    color: "#0000FF",
+    fontSize: 20,
+    fontWeight: "bold",
+  },
+  debug: {
+    // デバッグ用のスタイル
+    borderWidth: 2,
+    borderColor: "red",
+  },
+  ToSignIn: {
+    flexDirection: "row",
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  SignInLink: {
+    color: "blue",
+    textDecorationLine: "underline", // 下線を引く
+  },
+});
+
+//このままだとこのファイルでしか使えない
+//exportすることで、他のファイルでimportができる！！
+export default Login;
