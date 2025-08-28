@@ -7,6 +7,7 @@ import {
   StatusBar,
   ScrollView,
 } from 'react-native';
+import { Link } from 'expo-router';
 
 export default function MyPageScreen() {
   return (
@@ -21,7 +22,11 @@ export default function MyPageScreen() {
       {/* タブ */}
       <View style={styles.tabRow}>
         <Text style={styles.tabActive}>勉強時間</Text>
-        <Text style={styles.tabInactive}>TODOリスト</Text>
+        <Link href="/todo" asChild>
+          <TouchableOpacity accessibilityRole="button">
+            <Text style={styles.tabInactive}>TODOリスト</Text>
+          </TouchableOpacity>
+        </Link>
       </View>
       <View style={styles.tabUnderline} />
       {/* グラフエリア */}
@@ -35,33 +40,37 @@ export default function MyPageScreen() {
           </View>
           {/* 棒グラフ */}
           <ScrollView
-            style={{ maxHeight: 260 }}
-            contentContainerStyle={{ alignItems: 'flex-start' }}
+            style={{ maxHeight: 500 }}
+            contentContainerStyle={styles.barGraphArea}
             horizontal
             showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled={false}
           >
-            <View>
-              {/* 棒の上のラベル */}
-              <View style={styles.barLabels}>
-                {[...Array(7)].map((_, i) => (
+            <View style={{ height: 300, justifyContent: 'flex-end' }}>
+              <View style={[styles.barGraph, { height: 220 }]}>
+                {[...Array(8)].map((_, i) => (
+                  <React.Fragment key={i}>
+                    <View style={[styles.bar, { height: 220 }]} />
+                    {i < 7 && <View style={styles.barDivider} />}
+                  </React.Fragment>
+                ))}
+              </View>
+              <View
+                style={[
+                  styles.barLabels,
+                  { marginTop: 8, backgroundColor: '#fff' },
+                ]}
+              >
+                {[...Array(8)].map((_, i) => (
                   <Text key={i} style={styles.barLabel}>
                     国語
                   </Text>
-                ))}
-              </View>
-              <View style={styles.barGraph}>
-                {[...Array(7)].map((_, i) => (
-                  <React.Fragment key={i}>
-                    <View style={styles.bar} />
-                    {i < 6 && <View style={styles.barDivider} />}
-                  </React.Fragment>
                 ))}
               </View>
             </View>
           </ScrollView>
         </View>
       </View>
-      {/* 下部の横線とa */}
       <View style={styles.bottomArea}>
         <View style={styles.bottomLine} />
         <View style={styles.bottomAs}>
@@ -146,7 +155,7 @@ const styles = StyleSheet.create({
     marginTop: 10,
     alignItems: 'center',
     width: '100%',
-    minHeight: 320, // 高さを大きく
+    minHeight: 220, // 高さを大きく
   },
   graphLabel: {
     color: '#888',
@@ -164,22 +173,25 @@ const styles = StyleSheet.create({
     marginTop: 4,
   },
   yAxis: {
-    alignItems: 'center',
+    flexDirection: 'row',
+    alignItems: 'flex-start',
     marginRight: 6,
+    marginBottom: 50,
     height: 220, // 高さアップ
     justifyContent: 'flex-end',
-    width: 32,
+    width: 40,
   },
   yAxisLabel: {
     color: '#888',
     fontSize: 12,
-    position: 'absolute',
-    top: 38, // ラベル位置調整
-    left: -8,
+    marginRight: 4,
+    marginTop: 8,
+    width: 28,
     fontWeight: 'bold',
     textShadowColor: '#fff',
     textShadowOffset: { width: 0, height: 1 },
     textShadowRadius: 1,
+    textAlign: 'right',
   },
   yAxisLine: {
     width: 1.5,
@@ -190,18 +202,18 @@ const styles = StyleSheet.create({
   barGraphArea: {
     alignItems: 'flex-start',
     // 横スクロール対応のためminWidth削除
-    maxHeight: 260,
+    minHeight: 320,
   },
   barGraph: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: 220, // 高さアップ
-    marginBottom: 8,
+    height: 520, // 高さを大きく
+    marginBottom: 0,
     justifyContent: 'center',
   },
   bar: {
     width: 24,
-    height: 180, // 棒を高く
+    height: 520,
     backgroundColor: '#ff7300',
     borderTopLeftRadius: 3,
     borderTopRightRadius: 3,
@@ -215,9 +227,10 @@ const styles = StyleSheet.create({
   },
   barLabels: {
     flexDirection: 'row',
-    justifyContent: 'center',
+    justifyContent: 'flex-end',
     width: 'auto',
     marginTop: 8,
+    backgroundColor: '#fff',
   },
   barLabel: {
     width: 44,
