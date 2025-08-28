@@ -8,24 +8,25 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 
-import Header from "../../components/Header";
 import Button from "../../components/Button";
-// import Footer from '../../components/Footer'
+
+//useNavigationは
 
 const Signin = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const handleSignInPress = () => {}; //新規登録チェック
+  const handleSignInPress = () => {
+    router.replace('/')//ここにメインメニューなるほどね、スタックの中をこれで上書きするんだ
+  }; //新規登録チェック
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
     <SafeAreaView style={styles.container}>
-      <Header />
       <View style={styles.content}>
         <View style={styles.titleFlame}>
           <Text style={styles.titleText}>勉強アプリ</Text>

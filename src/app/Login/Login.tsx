@@ -9,23 +9,22 @@ import {
   TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
-import { Link } from "expo-router";
+import { Link, router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
-import Header from "../../components/Header";
 import Button from "../../components/Button";
+// import Header from "../../components/Header";
 // import Footer from "../../components/Footer";
 
 const Login = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-
+  //TODO 登録機能(firebase)
   const handleLoginPress = () => {};
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
     <SafeAreaProvider>
       <SafeAreaView style={styles.container}>
-        <Header />
         <View style={styles.content}>
           <View style={styles.titleFlame}>
             <Text style={styles.titleText}>勉強アプリ</Text>
