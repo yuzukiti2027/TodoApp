@@ -6,9 +6,10 @@ import {
   TextInput,
   Image,
   SafeAreaView,
+  TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
-import { useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Header from "../../components/Header";
 import Button from "../../components/Button";
@@ -17,13 +18,8 @@ import Button from "../../components/Button";
 const Login = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const router = useRouter();
 
   const handleLoginPress = () => {};
-
-  const handleSignInPress = () => {
-    router.push("../Signin/Signin");
-  };
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
@@ -63,9 +59,11 @@ const Login = () => {
           <Button onPress={handleLoginPress} label="ログイン" />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
-            <Pressable onPress={handleSignInPress}>
-              <Text style={styles.SignInLink}>新規登録</Text>
-            </Pressable>
+            <Link href="../Signin/Signin" asChild>
+              <TouchableOpacity>
+                <Text style={styles.SignInLink}>新規登録</Text>
+              </TouchableOpacity>
+            </Link>
           </View>
         </View>
       </SafeAreaView>

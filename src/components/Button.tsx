@@ -1,11 +1,11 @@
 import { Text, StyleSheet, Pressable, TouchableOpacity } from "react-native";
 
-type Buttonprops = {
-  onPress: () => void; //関数が入るような変数
+type ButtonProps = {
+  onPress?: () => void; //関数が入るような変数
   label?: string;
 };
 
-const Button = ({ onPress, label }: Buttonprops) => {
+const Button = ({ onPress, label }: ButtonProps) => {
   return (
     <TouchableOpacity onPress={onPress} style={styles.button}>
       <Text style={styles.buttonLabel}>{label}</Text>

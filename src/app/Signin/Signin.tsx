@@ -5,9 +5,10 @@ import {
   StyleSheet,
   TextInput,
   SafeAreaView,
+  TouchableOpacity,
 } from "react-native";
 import { useState } from "react";
-import { useRouter } from "expo-router";
+import { Link } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 
@@ -18,13 +19,8 @@ import Button from "../../components/Button";
 const Signin = () => {
   const [username, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  const router = useRouter();
 
   const handleSignInPress = () => {}; //新規登録チェック
-
-  const handleLoginPress = () => {
-    router.push("../Login/Login");
-  }; //ログインのページへ遷移
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
@@ -54,12 +50,14 @@ const Signin = () => {
             secureTextEntry // パスワード入力用に追記するとより良い(隠すやつ)
           />
         </View>
-        <Button onPress={handleLoginPress} label="新規登録" />
+        <Button label="新規登録" />
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
-          <Pressable onPress={handleLoginPress}>
-            <Text style={styles.LogInLink}>ログイン</Text>
-          </Pressable>
+          <Link href={"../Login/Login"} asChild>
+            <TouchableOpacity>
+              <Text style={styles.LogInLink}>ログイン</Text>
+            </TouchableOpacity>
+          </Link>
         </View>
       </View>
     </SafeAreaView> // ここも忘れずに変更
