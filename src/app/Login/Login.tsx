@@ -11,6 +11,7 @@ import { useState } from "react";
 import { useRouter } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Header from "../../components/Header";
+import Button from "../../components/Button";
 // import Footer from "../../components/Footer";
 
 const Login = () => {
@@ -59,11 +60,7 @@ const Login = () => {
               secureTextEntry // パスワード入力用に追記するとより良い
             />
           </View>
-          <Pressable  onPress={handleLoginPress} style={styles.button}>
-            <Text style={styles.buttonLabel}>
-              ログイン
-            </Text>
-          </Pressable>
+          <Button onPress={handleLoginPress} label="ログイン" />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
             <Pressable onPress={handleSignInPress}>
@@ -128,23 +125,6 @@ const styles = StyleSheet.create({
     fontSize: 40,
     fontWeight: "bold",
     padding: 16,
-  },
-  button: {
-    width: "30%",
-    height: 45,
-    borderRadius: 8,
-    backgroundColor: "orange",
-    justifyContent: "center",
-    textAlign: "right",
-    position: "relative",
-    bottom: 0, // フッターの上に配置
-    left: 95, // 中央に配置
-  },
-  buttonLabel: {
-    textAlign: "center",
-    color: "#0000FF",
-    fontSize: 20,
-    fontWeight: "bold",
   },
   debug: {
     // デバッグ用のスタイル

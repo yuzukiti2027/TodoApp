@@ -4,14 +4,15 @@ import {
   Text,
   StyleSheet,
   TextInput,
-  Image,
   SafeAreaView,
 } from "react-native";
 import { useState } from "react";
-import {useRouter} from "expo-router";
+import { useRouter } from "expo-router";
+import { MaterialIcons } from "@expo/vector-icons";
+import { FontAwesome6 } from "@expo/vector-icons";
+
 import Header from "../../components/Header";
-import {MaterialIcons} from "@expo/vector-icons";
-import {FontAwesome6} from "@expo/vector-icons";
+import Button from "../../components/Button";
 // import Footer from '../../components/Footer'
 
 const Signin = () => {
@@ -19,11 +20,11 @@ const Signin = () => {
   const [password, setPassword] = useState<string>("");
   const router = useRouter();
 
-  const handleSignInPress = () => {};//新規登録チェック
+  const handleSignInPress = () => {}; //新規登録チェック
 
   const handleLoginPress = () => {
-    router.push("../Login/Login")
-  };//ログインのページへ遷移
+    router.push("../Login/Login");
+  }; //ログインのページへ遷移
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
@@ -35,7 +36,7 @@ const Signin = () => {
           <Text style={styles.titleText}>新規登録</Text>
         </View>
         <View style={styles.inputFlame}>
-          <MaterialIcons name="account-circle" size={40} style={styles.image}/>
+          <MaterialIcons name="account-circle" size={40} style={styles.image} />
           <TextInput
             value={username}
             onChangeText={setUsername}
@@ -44,7 +45,7 @@ const Signin = () => {
           />
         </View>
         <View style={styles.inputFlame}>
-          <FontAwesome6 name="key" size={30} style={styles.image}/>
+          <FontAwesome6 name="key" size={30} style={styles.image} />
           <TextInput
             value={password}
             onChangeText={setPassword}
@@ -53,11 +54,7 @@ const Signin = () => {
             secureTextEntry // パスワード入力用に追記するとより良い(隠すやつ)
           />
         </View>
-        <Pressable onPress={handleLoginPress} style={styles.button}>
-          <Text style={styles.buttonLabel} onPress={handleSignInPress}>
-            新規登録
-          </Text>
-        </Pressable>
+        <Button onPress={handleLoginPress} label="新規登録" />
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
           <Pressable onPress={handleLoginPress}>
