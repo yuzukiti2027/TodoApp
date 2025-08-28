@@ -1,25 +1,20 @@
-import {Text, StyleSheet, Pressable} from "react-native"
+import { Text, StyleSheet, Pressable, TouchableOpacity } from "react-native";
 
 type Buttonprops = {
-    onPress: () => void;//関数が入るような変数
-    label?: string;
-}
+  onPress: () => void; //関数が入るような変数
+  label?: string;
+};
 
-const Button = ({onPress, label}: Buttonprops) => {
-
-    return(
-        <Pressable  onPress={onPress} style={styles.button}>
-          <Text style={styles.buttonLabel}>
-            {label}
-          </Text>
-        </Pressable>
-    );
-}
-
-
+const Button = ({ onPress, label }: Buttonprops) => {
+  return (
+    <TouchableOpacity onPress={onPress} style={styles.button}>
+      <Text style={styles.buttonLabel}>{label}</Text>
+    </TouchableOpacity>
+  );
+};
 
 const styles = StyleSheet.create({
-button: {
+  button: {
     width: "30%",
     height: 45,
     borderRadius: 8,
@@ -30,12 +25,12 @@ button: {
     bottom: 0, // フッターの上に配置
     left: 95, // 中央に配置
   },
-    buttonLabel: {
+  buttonLabel: {
     textAlign: "center",
     color: "#0000FF",
     fontSize: 20,
     fontWeight: "bold",
   },
-})
+});
 
-export default Button
+export default Button;
