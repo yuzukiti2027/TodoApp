@@ -6,22 +6,37 @@ import {
   TextInput,
   SafeAreaView,
   TouchableOpacity,
+  Alert,
 } from "react-native";
 import { useState } from "react";
 import { Link, router } from "expo-router";
 import { MaterialIcons } from "@expo/vector-icons";
 import { FontAwesome6 } from "@expo/vector-icons";
 
+import { createUserWithEmailAndPassword } from "firebase/auth";//登録するやつ
+import {auth} from "../../config"//登録するやつ
 import Button from "../../components/Button";
+
 
 //useNavigationは
 
 const Signin = () => {
-  const [username, setUsername] = useState<string>("");
+  const [email, setUsername] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
-  const handleSignInPress = () => {
-    router.replace('/')//ここにメインメニューなるほどね、スタックの中をこれで上書きするんだ
+
+  const handleSignInPress = (email: string, password: string) => {
+    console.log(email, password);
+    createUserWithEmailAndPassword(auth, email, password)
+      .then((userCredential) =>{
+        console.log(userCredential.user.uid)
+        router.replace('../Mypage/Mypage')//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
+      })
+      .catch((e) => {
+        const {code, message} = e;
+        console.log(code, message);
+        Alert.alert(message);
+      })
   }; //新規登録チェック
 
   return (
@@ -35,7 +50,7 @@ const Signin = () => {
         <View style={styles.inputFlame}>
           <MaterialIcons name="account-circle" size={40} style={styles.image} />
           <TextInput
-            value={username}
+            value={email}
             onChangeText={setUsername}
             style={styles.input}
             placeholder="Username"
@@ -56,7 +71,7 @@ const Signin = () => {
             textContentType="password"
           />
         </View>
-        <Button label="新規登録" />
+        <Button label="新規登録" onPress={() => handleSignInPress(email, password)} />{/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
           <Link href={"../Login/Login"} asChild>
