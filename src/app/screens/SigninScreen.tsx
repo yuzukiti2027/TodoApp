@@ -30,7 +30,7 @@ const Signin = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) =>{
         console.log(userCredential.user.uid);
-        router.replace('../Mypage/Mypage');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
+        router.replace('./MypageScreen.tsx');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
       })
       .catch((e) => {
         const {code, message} = e;
@@ -74,7 +74,7 @@ const Signin = () => {
         <Button label="新規登録" onPress={() => handleSignInPress(email, password)} />{/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
-          <Link href={"../Login/Login"} asChild>
+          <Link href={"./LoginScreen.tsx"} asChild>
             <TouchableOpacity>
               <Text style={styles.LogInLink}>ログイン</Text>
             </TouchableOpacity>

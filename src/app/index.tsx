@@ -15,7 +15,7 @@ const Index = () => {
         })
 
     }, [])
-    return <Redirect href='./screens/LoginScreen'/>
+    return <Redirect href='./screens/FriendScreen'/>
 }
 
 export default Index
