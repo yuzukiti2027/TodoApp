@@ -7,19 +7,34 @@ import {
   Image,
   SafeAreaView,
   TouchableOpacity,
+  Alert
 } from "react-native";
 import { useState } from "react";
 import { Link, router } from "expo-router";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import Button from "../../components/Button";
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from "../../config";
 // import Header from "../../components/Header";
 // import Footer from "../../components/Footer";
 
 const Login = () => {
-  const [username, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
-  //TODO 登録機能(firebase)
-  const handleLoginPress = () => {};
+
+  const handleLoginPress = (email: string, password: string) => {
+    //ログイン
+    signInWithEmailAndPassword(auth, email, password)
+      .then((userCredential) => {
+        console.log(userCredential.user.uid);
+        router.replace("../Mypage/Mypage.tsx");
+      })
+      .catch((e)=>{
+        const {code, message} = e;
+        console.log(code,  message);
+        Alert.alert(message);
+      })
+  };
 
   return (
     // ここを <View> から <SafeAreaView> に変更！
@@ -36,8 +51,8 @@ const Login = () => {
               style={styles.image}
             />
             <TextInput
-              value={username}
-              onChangeText={setUsername}
+              value={email}
+              onChangeText={setEmail}
               style={styles.input}
               placeholder="Username"
               autoCapitalize="none"
@@ -60,10 +75,10 @@ const Login = () => {
               textContentType="password"
             />
           </View>
-          <Button onPress={handleLoginPress} label="ログイン" />
+          <Button onPress={() => {handleLoginPress(email, password)}} label="ログイン" />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
-            <Link href="../Signin/Signin" asChild>
+            <Link href="../Signin/Signin" asChild replace>
               <TouchableOpacity>
                 <Text style={styles.SignInLink}>新規登録</Text>
               </TouchableOpacity>

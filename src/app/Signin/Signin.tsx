@@ -21,7 +21,7 @@ import Button from "../../components/Button";
 //useNavigationは
 
 const Signin = () => {
-  const [email, setUsername] = useState<string>("");
+  const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
 
 
@@ -29,8 +29,8 @@ const Signin = () => {
     console.log(email, password);
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) =>{
-        console.log(userCredential.user.uid)
-        router.replace('../Mypage/Mypage')//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
+        console.log(userCredential.user.uid);
+        router.replace('../Mypage/Mypage');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
       })
       .catch((e) => {
         const {code, message} = e;
@@ -51,7 +51,7 @@ const Signin = () => {
           <MaterialIcons name="account-circle" size={40} style={styles.image} />
           <TextInput
             value={email}
-            onChangeText={setUsername}
+            onChangeText={setEmail}
             style={styles.input}
             placeholder="Username"
             autoCapitalize="none"
