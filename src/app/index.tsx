@@ -206,6 +206,21 @@ export default function MyPageScreen() {
       .sort((a, b) => b.totalHours - a.totalHours);
   }, [selectedSubject, subjectsData]);
 
+  // 科目別の合計時間を計算
+  const totalSubjectHours = useMemo(() => {
+    return subjectsData.reduce((total, subject) => {
+      return (
+        total +
+        subject.studyRecords.reduce((sum, record) => sum + record.hours, 0)
+      );
+    }, 0);
+  }, [subjectsData]);
+
+  // 日別の合計時間を計算（現在表示中の週）
+  const totalDailyHours = useMemo(() => {
+    return dailyData.reduce((total, day) => total + day.totalHours, 0);
+  }, [dailyData]);
+
   // 日別表示用のmaxYAxisHours
   const dailyMaxYAxisHours = useMemo(() => {
     const maxDailyHours = Math.max(0, ...dailyData.map((d) => d.totalHours));
@@ -233,39 +248,16 @@ export default function MyPageScreen() {
   const generateYAxisLabels = () => {
     const labels = [];
     const gridLines = [];
-    const graphHeight = 400; // グラフの高さ
+    const graphHeight = 240; // グラフの高さ（75%に縮小）
     const startPosition = 0; // グラフの開始位置
-    const baseValue =
-      maxYAxisHours <= 10
-        ? 10
-        : maxYAxisHours <= 20
-        ? 20
-        : maxYAxisHours <= 50
-        ? 50
-        : maxYAxisHours <= 100
-        ? 100
-        : Math.max(maxYAxisHours, 200);
-
-    const step = baseValue / 5;
-    const values = [0, step, step * 2, step * 3, step * 4, baseValue];
+    const step = maxYAxisHours / 5;
+    const values = [0, step, step * 2, step * 3, step * 4, maxYAxisHours];
     values.forEach((value) => {
       // グラフの高さに合わせて位置を計算（下から上へ）
       // maxYAxisHoursを使用して棒グラフと同じ計算式にする
       const position =
         startPosition +
-        (-18 +
-          graphHeight -
-          (value /
-            (maxYAxisHours <= 10
-              ? 10
-              : maxYAxisHours <= 20
-              ? 20
-              : maxYAxisHours <= 50
-              ? 50
-              : maxYAxisHours <= 100
-              ? 100
-              : Math.max(maxYAxisHours, 200))) *
-            graphHeight);
+        (-18 + graphHeight - (value / maxYAxisHours) * graphHeight);
       labels.push({
         value: value,
         position: position,
@@ -283,7 +275,7 @@ export default function MyPageScreen() {
   const generateDailyYAxisLabels = () => {
     const labels = [];
     const gridLines = [];
-    const graphHeight = 400;
+    const graphHeight = 240; // グラフの高さ（75%に縮小）
     const startPosition = 0;
     const baseValue = dailyMaxYAxisHours;
 
@@ -509,7 +501,12 @@ export default function MyPageScreen() {
       </View>
       {/* グラフエリア */}
       <View style={styles.graphArea}>
-        <View style={styles.viewModeSelector}>
+        <View
+          style={[
+            styles.viewModeSelector,
+            viewMode === 'subject' && styles.viewModeSelectorSubject,
+          ]}
+        >
           <TouchableOpacity
             style={[
               styles.viewModeButton,
@@ -544,41 +541,56 @@ export default function MyPageScreen() {
           </TouchableOpacity>
         </View>
 
-        {/* 週の切り替えボタン（日別表示時のみ） */}
-        {viewMode === 'daily' && (
-          <View style={styles.weekSelector}>
-            <TouchableOpacity
-              style={styles.weekButton}
-              onPress={() => setWeekOffset(weekOffset - 1)}
-            >
-              <MaterialIcons name="chevron-left" size={24} color="#5c6bc0" />
-            </TouchableOpacity>
-            <Text style={styles.weekLabel}>
-              {(() => {
-                const weekRange = getWeekDates(weekOffset);
-                const startDate = new Date(weekRange.start);
-                const endDate = new Date(weekRange.end);
-                return `${startDate.getMonth() + 1}/${startDate.getDate()} - ${
-                  endDate.getMonth() + 1
-                }/${endDate.getDate()}`;
-              })()}
-            </Text>
-            <TouchableOpacity
-              style={[
-                styles.weekButton,
-                weekOffset >= 0 && styles.weekButtonDisabled,
-              ]}
-              onPress={() => weekOffset < 0 && setWeekOffset(weekOffset + 1)}
-              disabled={weekOffset >= 0}
-            >
-              <MaterialIcons
-                name="chevron-right"
-                size={24}
-                color={weekOffset >= 0 ? '#ccc' : '#5c6bc0'}
-              />
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* 週の切り替えボタン（常に表示、科目別時は透明） */}
+        <View style={styles.weekSelector}>
+          {viewMode === 'daily' ? (
+            <>
+              <TouchableOpacity
+                style={styles.weekButton}
+                onPress={() => setWeekOffset(weekOffset - 1)}
+              >
+                <MaterialIcons name="chevron-left" size={24} color="#5c6bc0" />
+              </TouchableOpacity>
+              <Text style={styles.weekLabel}>
+                {(() => {
+                  const weekRange = getWeekDates(weekOffset);
+                  const startDate = new Date(weekRange.start);
+                  const endDate = new Date(weekRange.end);
+                  return `${
+                    startDate.getMonth() + 1
+                  }/${startDate.getDate()} - ${
+                    endDate.getMonth() + 1
+                  }/${endDate.getDate()}`;
+                })()}
+              </Text>
+              <TouchableOpacity
+                style={[
+                  styles.weekButton,
+                  weekOffset >= 0 && styles.weekButtonDisabled,
+                ]}
+                onPress={() => weekOffset < 0 && setWeekOffset(weekOffset + 1)}
+                disabled={weekOffset >= 0}
+              >
+                <MaterialIcons
+                  name="chevron-right"
+                  size={24}
+                  color={weekOffset >= 0 ? '#ccc' : '#5c6bc0'}
+                />
+              </TouchableOpacity>
+            </>
+          ) : (
+            <View style={styles.weekSelectorPlaceholder} />
+          )}
+        </View>
+
+        {/* 合計時間表示 */}
+        <View style={styles.totalHoursContainer}>
+          <Text style={styles.totalHoursLabel}>
+            合計時間:{' '}
+            {viewMode === 'subject' ? totalSubjectHours : totalDailyHours}h
+          </Text>
+        </View>
+
         <View style={styles.chartRow}>
           {/* 縦軸 */}
           <View style={styles.yAxis}>
@@ -605,7 +617,7 @@ export default function MyPageScreen() {
           >
             <View
               style={{
-                height: viewMode === 'daily' ? 445 : 500,
+                height: 300,
                 justifyContent: 'flex-end',
                 position: 'relative',
               }}
@@ -622,12 +634,7 @@ export default function MyPageScreen() {
                   />
                 ))}
               </View>
-              <View
-                style={[
-                  styles.barGraph,
-                  { height: viewMode === 'daily' ? 400 : 400 },
-                ]}
-              >
+              <View style={[styles.barGraph, { height: 240 }]}>
                 {viewMode === 'subject'
                   ? subjectsData.map((item, i) => {
                       const totalHours = item.studyRecords.reduce(
@@ -636,20 +643,7 @@ export default function MyPageScreen() {
                       );
                       const height =
                         totalHours > 0
-                          ? Math.max(
-                              2,
-                              (totalHours /
-                                (maxYAxisHours <= 10
-                                  ? 10
-                                  : maxYAxisHours <= 20
-                                  ? 20
-                                  : maxYAxisHours <= 50
-                                  ? 50
-                                  : maxYAxisHours <= 100
-                                  ? 100
-                                  : Math.max(maxYAxisHours, 200))) *
-                                400
-                            )
+                          ? Math.max(2, (totalHours / maxYAxisHours) * 240)
                           : 0;
                       console.log(
                         `Graph rendering - ${item.label}: totalHours=${totalHours}, height=${height}, maxYAxisHours=${maxYAxisHours}`
@@ -674,7 +668,7 @@ export default function MyPageScreen() {
                         item.totalHours > 0
                           ? Math.max(
                               2,
-                              (item.totalHours / dailyMaxYAxisHours) * 400
+                              (item.totalHours / dailyMaxYAxisHours) * 240
                             )
                           : 0;
                       const dateObj = new Date(item.date);
@@ -712,6 +706,15 @@ export default function MyPageScreen() {
           </ScrollView>
         </View>
       </View>
+
+      {/* 時間の追加ボタン */}
+      <View style={styles.addButtonContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={openAdd}>
+          <MaterialIcons name="add-circle-outline" size={24} color="#fff" />
+          <Text style={styles.addButtonText}>時間の追加</Text>
+        </TouchableOpacity>
+      </View>
+
       <View style={styles.bottomArea}>
         <View style={styles.bottomLine} />
         <View style={styles.bottomAs}>
@@ -719,11 +722,6 @@ export default function MyPageScreen() {
             <MaterialIcons name="bar-chart" size={28} color="#333" />
             <Text style={styles.bottomLabel}>勉強時間</Text>
           </View>
-          <View style={styles.bottomDivider} />
-          <TouchableOpacity style={styles.bottomItem} onPress={openAdd}>
-            <MaterialIcons name="add-circle-outline" size={28} color="#333" />
-            <Text style={styles.bottomLabel}>時間の追加</Text>
-          </TouchableOpacity>
           <View style={styles.bottomDivider} />
           <View style={styles.bottomItem}>
             <Ionicons name="search" size={28} color="#333" />
@@ -733,6 +731,11 @@ export default function MyPageScreen() {
           <View style={styles.bottomItem}>
             <MaterialIcons name="people-outline" size={28} color="#333" />
             <Text style={styles.bottomLabel}>フレンド</Text>
+          </View>
+          <View style={styles.bottomDivider} />
+          <View style={styles.bottomItem}>
+            <MaterialIcons name="person-outline" size={28} color="#333" />
+            <Text style={styles.bottomLabel}>マイページ</Text>
           </View>
         </View>
         {/* 追加モーダル */}
@@ -1164,10 +1167,10 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   graphArea: {
-    marginTop: 20,
+    flex: 1,
+    justifyContent: 'center',
     alignItems: 'center',
-    width: 399, // 7つの項目を399pxに収める
-    minHeight: 700, // 高さを調整して400pxのグラフが確実に表示できるように
+    minHeight: 500, // 高さを調整してボタンが表示されるように
   },
   graphLabel: {
     color: '#888',
@@ -1186,6 +1189,12 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     padding: 4,
   },
+  //viewModeSelectorSubject: {
+  //  marginTop: 36, // 科目別選択時は少し下に移動
+  //},
+  //viewModeSelectorDaily: {
+  //  marginBottom: 56, // 日別選択時は少し上に移動
+  //},
   viewModeButton: {
     flex: 1,
     paddingVertical: 8,
@@ -1208,7 +1217,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 15,
+    marginBottom: 16,
     gap: 20,
   },
   weekButton: {
@@ -1227,17 +1236,22 @@ const styles = StyleSheet.create({
     minWidth: 60,
     textAlign: 'center',
   },
+  weekSelectorPlaceholder: {
+    height: 40, // 週選択ボタンと同じ高さ（padding + icon + gap）
+    opacity: 0, // 透明にして見えないようにする
+  },
   chartRow: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginTop: 2, // 余白を調整
+    //marginBottom: 16,
   },
   yAxis: {
     flexDirection: 'row',
     alignItems: 'flex-end',
     marginRight: 0, // Y軸と棒グラフの隙間を狭く
     marginBottom: 6, // 余白を調整
-    height: 400, // グラフの高さに合わせて調整
+    height: 240, // グラフの高さに合わせて調整（75%に縮小）
     justifyContent: 'flex-end',
     width: 40,
     position: 'relative',
@@ -1246,7 +1260,7 @@ const styles = StyleSheet.create({
     position: 'absolute',
     left: 0,
     right: 0,
-    height: 400, // グラフの高さに合わせて調整
+    height: 240, // グラフの高さに合わせて調整（75%に縮小）
   },
   gridLine: {
     position: 'absolute',
@@ -1273,13 +1287,13 @@ const styles = StyleSheet.create({
     textAlign: 'right',
   },
   yAxisLine: {
-    width: 1.5,
-    height: 400, // グラフの高さに合わせて調整
-    backgroundColor: '#888',
+    width: 0,
+    height: 240, // グラフの高さに合わせて調整（75%に縮小）
+    backgroundColor: 'transparent',
     marginBottom: 0,
   },
   barGraphArea: {
-    alignItems: 'flex-start',
+    alignItems: 'center',
     minHeight: 200, // 高さを調整
   },
   barGraph: {
@@ -1330,13 +1344,14 @@ const styles = StyleSheet.create({
   },
   bottomArea: {
     position: 'absolute',
-    bottom: 0,
+    bottom: -20,
     left: 0,
     right: 0,
     alignItems: 'center',
     width: '100%',
     backgroundColor: '#fff',
     paddingTop: 20,
+    paddingBottom: 20,
   },
   bottomLine: {
     height: 2,
@@ -1592,5 +1607,52 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 16,
+  },
+  addButtonContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
+    marginBottom: 100,
+    position: 'relative',
+    zIndex: 10,
+  },
+  addButton: {
+    backgroundColor: '#5c6bc0',
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+    borderRadius: 30,
+    width: 250,
+    height: 56,
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 11,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    flexDirection: 'row',
+    gap: 8,
+  },
+  addButtonText: {
+    color: '#fff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  totalHoursContainer: {
+    alignItems: 'center',
+    marginBottom: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    backgroundColor: '#f8f9fa',
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+  },
+  totalHoursLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#5c6bc0',
   },
 });
