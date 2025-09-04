@@ -10,12 +10,12 @@ const Index = () => {
         //ユーザのログイン情報を確認
         onAuthStateChanged(auth, (user) => {
             if(user !== null){
-                router.replace("../app/Mypage/Mypage")
+                router.replace("./screens/MypageScreen")
             }
         })
 
     }, [])
-    return <Redirect href='./Signin/Signin'/>
+    return <Redirect href='./screens/LoginScreen'/>
 }
 
 export default Index
