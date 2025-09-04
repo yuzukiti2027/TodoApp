@@ -1,7 +1,21 @@
-import {Redirect} from "expo-router"
+import {Redirect, router} from "expo-router"
+import { useEffect } from "react"
+import { onAuthStateChanged  } from "firebase/auth"
+
+import { auth } from "../config"
+//ユーザのログイン情報を確認
 
 const Index = () => {
-    return <Redirect href='Login/Login'/>
+    useEffect(() => {
+        //ユーザのログイン情報を確認
+        onAuthStateChanged(auth, (user) => {
+            if(user !== null){
+                router.replace("../app/Mypage/Mypage")
+            }
+        })
+
+    }, [])
+    return <Redirect href='./Signin/Signin'/>
 }
 
 export default Index
