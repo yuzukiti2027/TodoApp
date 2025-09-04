@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { Link } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import BottomNavigation from '../components/BottomNavigation';
+import Header from '../components/Header';
 
 export default function MyPageScreen() {
   const [viewMode, setViewMode] = useState<'subject' | 'daily'>('subject'); // 表示モードの状態
@@ -477,12 +479,7 @@ export default function MyPageScreen() {
   return (
     <View style={styles.root}>
       <StatusBar barStyle="dark-content" backgroundColor="#f8f9fb" />
-      {/* ヘッダー */}
-      <View style={styles.headerShadow}>
-        <View style={styles.header}>
-          <Text style={styles.headerText}>マイページ</Text>
-        </View>
-      </View>
+      <Header title="勉強時間" />
       {/* タブ */}
       <View style={styles.tabRow}>
         <View style={styles.tabContainer}>
@@ -710,252 +707,228 @@ export default function MyPageScreen() {
       {/* 時間の追加ボタン */}
       <View style={styles.addButtonContainer}>
         <TouchableOpacity style={styles.addButton} onPress={openAdd}>
-          <MaterialIcons name="add-circle-outline" size={24} color="#fff" />
+          <MaterialIcons name="add-circle-outline" size={20} color="#fff" />
           <Text style={styles.addButtonText}>時間の追加</Text>
         </TouchableOpacity>
       </View>
 
-      <View style={styles.bottomArea}>
-        <View style={styles.bottomLine} />
-        <View style={styles.bottomAs}>
-          <View style={styles.bottomItem}>
-            <MaterialIcons name="bar-chart" size={28} color="#333" />
-            <Text style={styles.bottomLabel}>勉強時間</Text>
-          </View>
-          <View style={styles.bottomDivider} />
-          <View style={styles.bottomItem}>
-            <Ionicons name="search" size={28} color="#333" />
-            <Text style={styles.bottomLabel}>検索</Text>
-          </View>
-          <View style={styles.bottomDivider} />
-          <View style={styles.bottomItem}>
-            <MaterialIcons name="people-outline" size={28} color="#333" />
-            <Text style={styles.bottomLabel}>フレンド</Text>
-          </View>
-          <View style={styles.bottomDivider} />
-          <View style={styles.bottomItem}>
-            <MaterialIcons name="person-outline" size={28} color="#333" />
-            <Text style={styles.bottomLabel}>マイページ</Text>
-          </View>
-        </View>
-        {/* 追加モーダル */}
-        <Modal
-          visible={addVisible}
-          transparent
-          animationType="fade"
-          onRequestClose={closeAdd}
-        >
-          <View style={styles.modalOverlay}>
-            <KeyboardAvoidingView
-              behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
-              style={styles.keyboardAvoidingContainer}
-            >
-              <View style={styles.modalCard}>
-                <Text style={styles.modalTitle}>勉強時間を追加</Text>
+      {/* 追加モーダル */}
+      <Modal
+        visible={addVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={closeAdd}
+      >
+        <View style={styles.modalOverlay}>
+          <KeyboardAvoidingView
+            behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+            style={styles.keyboardAvoidingContainer}
+          >
+            <View style={styles.modalCard}>
+              <Text style={styles.modalTitle}>勉強時間を追加</Text>
 
-                {/* 選択肢 */}
-                <View style={styles.choiceRow}>
-                  <TouchableOpacity
+              {/* 選択肢 */}
+              <View style={styles.choiceRow}>
+                <TouchableOpacity
+                  style={[
+                    styles.choiceBtn,
+                    addMode === 'existing' && styles.choiceBtnActive,
+                  ]}
+                  onPress={() => setAddMode('existing')}
+                >
+                  <Text
                     style={[
-                      styles.choiceBtn,
-                      addMode === 'existing' && styles.choiceBtnActive,
+                      styles.choiceText,
+                      addMode === 'existing' && styles.choiceTextActive,
                     ]}
-                    onPress={() => setAddMode('existing')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceText,
-                        addMode === 'existing' && styles.choiceTextActive,
-                      ]}
-                    >
-                      既存科目の更新
-                    </Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
+                    既存科目の更新
+                  </Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[
+                    styles.choiceBtn,
+                    addMode === 'new' && styles.choiceBtnActive,
+                  ]}
+                  onPress={() => setAddMode('new')}
+                >
+                  <Text
                     style={[
-                      styles.choiceBtn,
-                      addMode === 'new' && styles.choiceBtnActive,
+                      styles.choiceText,
+                      addMode === 'new' && styles.choiceTextActive,
                     ]}
-                    onPress={() => setAddMode('new')}
                   >
-                    <Text
-                      style={[
-                        styles.choiceText,
-                        addMode === 'new' && styles.choiceTextActive,
-                      ]}
-                    >
-                      新規科目の追加
-                    </Text>
-                  </TouchableOpacity>
-                </View>
-
-                {/* 既存科目更新 */}
-                {addMode === 'existing' && (
-                  <>
-                    <View style={styles.dropdownContainer}>
-                      <Text style={styles.dropdownLabel}>科目を選択</Text>
-                      <ScrollView style={styles.dropdown} nestedScrollEnabled>
-                        {subjectsData.map((subject, index) => (
-                          <TouchableOpacity
-                            key={index}
-                            style={[
-                              styles.dropdownItem,
-                              selectedSubjectIndex === index &&
-                                styles.dropdownItemSelected,
-                            ]}
-                            onPress={() => setSelectedSubjectIndex(index)}
-                          >
-                            <Text
-                              style={[
-                                styles.dropdownItemText,
-                                selectedSubjectIndex === index &&
-                                  styles.dropdownItemTextSelected,
-                              ]}
-                            >
-                              {subject.label} (
-                              {subject.studyRecords.reduce(
-                                (sum, r) => sum + r.hours,
-                                0
-                              )}
-                              h)
-                            </Text>
-                          </TouchableOpacity>
-                        ))}
-                      </ScrollView>
-                    </View>
-                    {/* 日付入力（年、月、日） */}
-                    <View style={styles.dateInputContainer}>
-                      <Text style={styles.dateInputLabel}>日付</Text>
-                      <View style={styles.dateInputRow}>
-                        <TextInput
-                          style={[styles.dateInput, styles.yearInput]}
-                          placeholder="年"
-                          keyboardType="numeric"
-                          value={addYear}
-                          onChangeText={setAddYear}
-                          maxLength={4}
-                        />
-                        <Text style={styles.dateInputSeparator}>年</Text>
-                        <TextInput
-                          style={[styles.dateInput, styles.monthInput]}
-                          placeholder="月"
-                          keyboardType="numeric"
-                          value={addMonth}
-                          onChangeText={setAddMonth}
-                          maxLength={2}
-                        />
-                        <Text style={styles.dateInputSeparator}>月</Text>
-                        <TextInput
-                          style={[styles.dateInput, styles.dayInput]}
-                          placeholder="日"
-                          keyboardType="numeric"
-                          value={addDay}
-                          onChangeText={setAddDay}
-                          maxLength={2}
-                        />
-                        <Text style={styles.dateInputSeparator}>日</Text>
-                      </View>
-                    </View>
-                    <TextInput
-                      style={[styles.modalInput, { marginTop: 8 }]}
-                      placeholder="追加する時間（h）"
-                      keyboardType="numeric"
-                      value={addHours}
-                      onChangeText={setAddHours}
-                      returnKeyType="done"
-                      onSubmitEditing={confirmAdd}
-                    />
-                    <TextInput
-                      style={[styles.modalInput, { marginTop: 8 }]}
-                      placeholder="勉強内容（使用した参考書や、勉強した範囲など）"
-                      value={addContent}
-                      onChangeText={setAddContent}
-                      multiline={true}
-                      numberOfLines={3}
-                    />
-                  </>
-                )}
-
-                {/* 新規科目追加 */}
-                {addMode === 'new' && (
-                  <>
-                    <TextInput
-                      style={styles.modalInput}
-                      placeholder="科目名"
-                      value={addLabel}
-                      onChangeText={setAddLabel}
-                    />
-                    {/* 日付入力（年、月、日） */}
-                    <View style={styles.dateInputContainer}>
-                      <Text style={styles.dateInputLabel}>日付</Text>
-                      <View style={styles.dateInputRow}>
-                        <TextInput
-                          style={[styles.dateInput, styles.yearInput]}
-                          placeholder="年"
-                          keyboardType="numeric"
-                          value={addYear}
-                          onChangeText={setAddYear}
-                          maxLength={4}
-                        />
-                        <Text style={styles.dateInputSeparator}>年</Text>
-                        <TextInput
-                          style={[styles.dateInput, styles.monthInput]}
-                          placeholder="月"
-                          keyboardType="numeric"
-                          value={addMonth}
-                          onChangeText={setAddMonth}
-                          maxLength={2}
-                        />
-                        <Text style={styles.dateInputSeparator}>月</Text>
-                        <TextInput
-                          style={[styles.dateInput, styles.dayInput]}
-                          placeholder="日"
-                          keyboardType="numeric"
-                          value={addDay}
-                          onChangeText={setAddDay}
-                          maxLength={2}
-                        />
-                        <Text style={styles.dateInputSeparator}>日</Text>
-                      </View>
-                    </View>
-                    <TextInput
-                      style={[styles.modalInput, { marginTop: 8 }]}
-                      placeholder="時間（h）"
-                      keyboardType="numeric"
-                      value={addHours}
-                      onChangeText={setAddHours}
-                      returnKeyType="done"
-                      onSubmitEditing={confirmAdd}
-                    />
-                    <TextInput
-                      style={[styles.modalInput, { marginTop: 8 }]}
-                      placeholder="勉強内容（使用した参考書や、勉強した範囲など）"
-                      value={addContent}
-                      onChangeText={setAddContent}
-                      multiline={true}
-                      numberOfLines={3}
-                    />
-                  </>
-                )}
-                <View style={styles.modalButtons}>
-                  <TouchableOpacity
-                    style={[styles.modalBtn, styles.modalCancel]}
-                    onPress={closeAdd}
-                  >
-                    <Text style={styles.modalBtnText}>キャンセル</Text>
-                  </TouchableOpacity>
-                  <TouchableOpacity
-                    style={[styles.modalBtn, styles.modalConfirm]}
-                    onPress={confirmAdd}
-                  >
-                    <Text style={styles.modalConfirmText}>追加</Text>
-                  </TouchableOpacity>
-                </View>
+                    新規科目の追加
+                  </Text>
+                </TouchableOpacity>
               </View>
-            </KeyboardAvoidingView>
-          </View>
-        </Modal>
-      </View>
+
+              {/* 既存科目更新 */}
+              {addMode === 'existing' && (
+                <>
+                  <View style={styles.dropdownContainer}>
+                    <Text style={styles.dropdownLabel}>科目を選択</Text>
+                    <ScrollView style={styles.dropdown} nestedScrollEnabled>
+                      {subjectsData.map((subject, index) => (
+                        <TouchableOpacity
+                          key={index}
+                          style={[
+                            styles.dropdownItem,
+                            selectedSubjectIndex === index &&
+                              styles.dropdownItemSelected,
+                          ]}
+                          onPress={() => setSelectedSubjectIndex(index)}
+                        >
+                          <Text
+                            style={[
+                              styles.dropdownItemText,
+                              selectedSubjectIndex === index &&
+                                styles.dropdownItemTextSelected,
+                            ]}
+                          >
+                            {subject.label} (
+                            {subject.studyRecords.reduce(
+                              (sum, r) => sum + r.hours,
+                              0
+                            )}
+                            h)
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </ScrollView>
+                  </View>
+                  {/* 日付入力（年、月、日） */}
+                  <View style={styles.dateInputContainer}>
+                    <Text style={styles.dateInputLabel}>日付</Text>
+                    <View style={styles.dateInputRow}>
+                      <TextInput
+                        style={[styles.dateInput, styles.yearInput]}
+                        placeholder="年"
+                        keyboardType="numeric"
+                        value={addYear}
+                        onChangeText={setAddYear}
+                        maxLength={4}
+                      />
+                      <Text style={styles.dateInputSeparator}>年</Text>
+                      <TextInput
+                        style={[styles.dateInput, styles.monthInput]}
+                        placeholder="月"
+                        keyboardType="numeric"
+                        value={addMonth}
+                        onChangeText={setAddMonth}
+                        maxLength={2}
+                      />
+                      <Text style={styles.dateInputSeparator}>月</Text>
+                      <TextInput
+                        style={[styles.dateInput, styles.dayInput]}
+                        placeholder="日"
+                        keyboardType="numeric"
+                        value={addDay}
+                        onChangeText={setAddDay}
+                        maxLength={2}
+                      />
+                      <Text style={styles.dateInputSeparator}>日</Text>
+                    </View>
+                  </View>
+                  <TextInput
+                    style={[styles.modalInput, { marginTop: 8 }]}
+                    placeholder="追加する時間（h）"
+                    keyboardType="numeric"
+                    value={addHours}
+                    onChangeText={setAddHours}
+                    returnKeyType="done"
+                    onSubmitEditing={confirmAdd}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, { marginTop: 8 }]}
+                    placeholder="勉強内容（使用した参考書や、勉強した範囲など）"
+                    value={addContent}
+                    onChangeText={setAddContent}
+                    multiline={true}
+                    numberOfLines={3}
+                  />
+                </>
+              )}
+
+              {/* 新規科目追加 */}
+              {addMode === 'new' && (
+                <>
+                  <TextInput
+                    style={styles.modalInput}
+                    placeholder="科目名"
+                    value={addLabel}
+                    onChangeText={setAddLabel}
+                  />
+                  {/* 日付入力（年、月、日） */}
+                  <View style={styles.dateInputContainer}>
+                    <Text style={styles.dateInputLabel}>日付</Text>
+                    <View style={styles.dateInputRow}>
+                      <TextInput
+                        style={[styles.dateInput, styles.yearInput]}
+                        placeholder="年"
+                        keyboardType="numeric"
+                        value={addYear}
+                        onChangeText={setAddYear}
+                        maxLength={4}
+                      />
+                      <Text style={styles.dateInputSeparator}>年</Text>
+                      <TextInput
+                        style={[styles.dateInput, styles.monthInput]}
+                        placeholder="月"
+                        keyboardType="numeric"
+                        value={addMonth}
+                        onChangeText={setAddMonth}
+                        maxLength={2}
+                      />
+                      <Text style={styles.dateInputSeparator}>月</Text>
+                      <TextInput
+                        style={[styles.dateInput, styles.dayInput]}
+                        placeholder="日"
+                        keyboardType="numeric"
+                        value={addDay}
+                        onChangeText={setAddDay}
+                        maxLength={2}
+                      />
+                      <Text style={styles.dateInputSeparator}>日</Text>
+                    </View>
+                  </View>
+                  <TextInput
+                    style={[styles.modalInput, { marginTop: 8 }]}
+                    placeholder="時間（h）"
+                    keyboardType="numeric"
+                    value={addHours}
+                    onChangeText={setAddHours}
+                    returnKeyType="done"
+                    onSubmitEditing={confirmAdd}
+                  />
+                  <TextInput
+                    style={[styles.modalInput, { marginTop: 8 }]}
+                    placeholder="勉強内容（使用した参考書や、勉強した範囲など）"
+                    value={addContent}
+                    onChangeText={setAddContent}
+                    multiline={true}
+                    numberOfLines={3}
+                  />
+                </>
+              )}
+              <View style={styles.modalButtons}>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalCancel]}
+                  onPress={closeAdd}
+                >
+                  <Text style={styles.modalBtnText}>キャンセル</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[styles.modalBtn, styles.modalConfirm]}
+                  onPress={confirmAdd}
+                >
+                  <Text style={styles.modalConfirmText}>追加</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </KeyboardAvoidingView>
+        </View>
+      </Modal>
 
       {/* 日別詳細モーダル */}
       <Modal
@@ -1097,6 +1070,8 @@ export default function MyPageScreen() {
           </View>
         </View>
       </Modal>
+
+      <BottomNavigation activeTab="study" />
     </View>
   );
 }
@@ -1197,10 +1172,11 @@ const styles = StyleSheet.create({
   //},
   viewModeButton: {
     flex: 1,
-    paddingVertical: 8,
+    paddingVertical: 10,
     paddingHorizontal: 16,
     borderRadius: 6,
     alignItems: 'center',
+    maxWidth: 120,
   },
   viewModeButtonActive: {
     backgroundColor: '#5c6bc0',
@@ -1245,6 +1221,8 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginTop: 2, // 余白を調整
     //marginBottom: 16,
+    maxWidth: '90%',
+    alignSelf: 'center',
   },
   yAxis: {
     flexDirection: 'row',
@@ -1305,7 +1283,7 @@ const styles = StyleSheet.create({
   },
   barGroup: {
     alignItems: 'center',
-    marginHorizontal: 0, // 間隔を調整
+    marginHorizontal: -4, // 間隔を狭く
   },
   bar: {
     width: 28,
@@ -1341,49 +1319,6 @@ const styles = StyleSheet.create({
     color: '#5f6368',
     marginBottom: 2, // 余白を調整
     fontWeight: '600',
-  },
-  bottomArea: {
-    position: 'absolute',
-    bottom: -20,
-    left: 0,
-    right: 0,
-    alignItems: 'center',
-    width: '100%',
-    backgroundColor: '#fff',
-    paddingTop: 20,
-    paddingBottom: 20,
-  },
-  bottomLine: {
-    height: 2,
-    backgroundColor: '#000',
-    width: '100%',
-    marginBottom: 0,
-  },
-  bottomAs: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    width: '100%',
-    marginTop: 10,
-    paddingHorizontal: 20,
-    alignItems: 'center',
-  },
-  bottomDivider: {
-    width: 1,
-    height: 36,
-    backgroundColor: '#e0e0e0',
-  },
-  bottomItem: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 4,
-    flex: 1,
-  },
-  bottomIcon: {
-    fontSize: 28,
-  },
-  bottomLabel: {
-    fontSize: 13,
-    color: '#333',
   },
   // modal styles (reuse from todo.tsx approach)
   modalOverlay: {
@@ -1613,17 +1548,17 @@ const styles = StyleSheet.create({
     paddingVertical: 20,
     paddingHorizontal: 20,
     backgroundColor: '#fff',
-    marginBottom: 100,
+    marginBottom: 140,
     position: 'relative',
     zIndex: 10,
   },
   addButton: {
     backgroundColor: '#5c6bc0',
-    paddingVertical: 16,
-    paddingHorizontal: 32,
-    borderRadius: 30,
-    width: 250,
-    height: 56,
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    width: 200,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
     zIndex: 11,
@@ -1633,11 +1568,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.2,
     shadowRadius: 3,
     flexDirection: 'row',
-    gap: 8,
+    gap: 6,
   },
   addButtonText: {
     color: '#fff',
-    fontSize: 18,
+    fontSize: 16,
     fontWeight: 'bold',
   },
   totalHoursContainer: {
@@ -1654,5 +1589,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
     color: '#5c6bc0',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: 20,
+    borderBottomWidth: 1,
+    borderBottomColor: '#e0e0e0',
+  },
+  closeButton: {
+    padding: 4,
   },
 });
