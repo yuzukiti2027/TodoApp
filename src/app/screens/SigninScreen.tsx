@@ -30,7 +30,8 @@ const Signin = () => {
     createUserWithEmailAndPassword(auth, email, password)
       .then((userCredential) =>{
         console.log(userCredential.user.uid);
-        router.replace('../Mypage/Mypage');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
+        //Todo後で、この新規登録の間に3秒後に、、ログインへ遷移みたいなやつ追加
+        router.replace('../screens/LoginScreen');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
       })
       .catch((e) => {
         const {code, message} = e;

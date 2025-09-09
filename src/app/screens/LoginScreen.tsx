@@ -27,7 +27,7 @@ const Login = () => {
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user.uid);
-        router.replace("../Mypage/Mypage.tsx");
+        router.replace("../screens/MypageScreen");
       })
       .catch((e)=>{
         const {code, message} = e;
