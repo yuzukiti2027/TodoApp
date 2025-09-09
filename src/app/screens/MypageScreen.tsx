@@ -3,12 +3,10 @@
 //         <div>HelloWorld!</div>
 //     )
 // }
-import { Text } from "react-native"
+import { Text } from 'react-native';
 
-const Mypage = () =>{
-    return(
-        <Text>マイページです</Text>
-    )
-}
+const Mypage = () => {
+  return <Text>マイページです</Text>;
+};
 
-export default Mypage
+export default Mypage;

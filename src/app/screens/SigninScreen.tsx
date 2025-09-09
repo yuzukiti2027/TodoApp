@@ -7,36 +7,34 @@ import {
   SafeAreaView,
   TouchableOpacity,
   Alert,
-} from "react-native";
-import { useState } from "react";
-import { Link, router } from "expo-router";
-import { MaterialIcons } from "@expo/vector-icons";
-import { FontAwesome6 } from "@expo/vector-icons";
+} from 'react-native';
+import { useState } from 'react';
+import { Link, router } from 'expo-router';
+import { MaterialIcons } from '@expo/vector-icons';
+import { FontAwesome6 } from '@expo/vector-icons';
 
-import { createUserWithEmailAndPassword } from "firebase/auth";//登録するやつ
-import {auth} from "../../config"//登録するやつ
-import Button from "../../components/Button";
-
+import { createUserWithEmailAndPassword } from 'firebase/auth'; //登録するやつ
+import { auth } from '../../config'; //登録するやつ
+import Button from '../../components/Button';
 
 //useNavigationは
 
 const Signin = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleSignInPress = (email: string, password: string) => {
     console.log(email, password);
     createUserWithEmailAndPassword(auth, email, password)
-      .then((userCredential) =>{
+      .then((userCredential) => {
         console.log(userCredential.user.uid);
-        router.replace('../Mypage/Mypage');//ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
+        router.replace('../screens/StudyTimeScreen'); //ここにメインメニュー,スタックの中をこれで上書きする(これだけで上書きする)
       })
       .catch((e) => {
-        const {code, message} = e;
+        const { code, message } = e;
         console.log(code, message);
         Alert.alert(message);
-      })
+      });
   }; //新規登録チェック
 
   return (
@@ -71,10 +69,14 @@ const Signin = () => {
             textContentType="password"
           />
         </View>
-        <Button label="新規登録" onPress={() => handleSignInPress(email, password)} />{/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
+        <Button
+          label="新規登録"
+          onPress={() => handleSignInPress(email, password)}
+        />
+        {/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
-          <Link href={"../Login/Login"} asChild>
+          <Link href={'../screens/LoginScreen'} asChild>
             <TouchableOpacity>
               <Text style={styles.LogInLink}>ログイン</Text>
             </TouchableOpacity>
@@ -89,28 +91,28 @@ const Signin = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between", //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
-    backgroundColor: "white",
+    justifyContent: 'space-between', //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
+    backgroundColor: 'white',
   },
   content: {
     flex: 1,
     gap: 32, // 要素間のスペースを設定
-    alignItems: "center",
-    justifyContent: "flex-start",
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   titleFlame: {
     marginTop: 56,
   },
   titleText: {
     fontSize: 40,
-    textAlign: "center",
-    color: "#8b8b8bff",
+    textAlign: 'center',
+    color: '#8b8b8bff',
   },
   inputFlame: {
     height: 56,
-    width: "80%",
-    flexDirection: "row",
-    borderColor: "gray",
+    width: '80%',
+    flexDirection: 'row',
+    borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 8, //角を丸くする
   },
@@ -123,49 +125,49 @@ const styles = StyleSheet.create({
   input: {
     // borderColor: 'gray',
     // borderWidth: 1,
-    width: "72%",
+    width: '72%',
     height: 56,
     paddingHorizontal: 8, //左右のpadding
     fontSize: 20,
   },
   text: {
-    color: "white",
-    backgroundColor: "blue",
+    color: 'white',
+    backgroundColor: 'blue',
     fontSize: 40,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     padding: 16,
   },
   button: {
-    width: "30%",
+    width: '30%',
     height: 45,
     borderRadius: 8,
-    backgroundColor: "orange",
-    justifyContent: "center",
-    textAlign: "right",
-    position: "relative",
+    backgroundColor: 'orange',
+    justifyContent: 'center',
+    textAlign: 'right',
+    position: 'relative',
     bottom: 0, // フッターの上に配置
     left: 95, // 中央に配置
   },
   buttonLabel: {
-    textAlign: "center",
-    color: "#0000FF",
+    textAlign: 'center',
+    color: '#0000FF',
     fontSize: 20,
-    fontWeight: "bold",
+    fontWeight: 'bold',
   },
   debug: {
     // デバッグ用のスタイル
     borderWidth: 2,
-    borderColor: "red",
+    borderColor: 'red',
   },
   ToLogIn: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
   },
   LogInLink: {
-    color: "blue",
-    textDecorationLine: "underline", // 下線を引く
+    color: 'blue',
+    textDecorationLine: 'underline', // 下線を引く
   },
 });
 

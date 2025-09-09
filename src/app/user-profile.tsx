@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,16 @@ import {
   Modal,
   Alert,
   Image,
+  TextInput,
 } from 'react-native';
 import { Link, useLocalSearchParams, router } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config';
 import BottomNavigation from '../components/BottomNavigation';
 import Header from '../components/Header';
 import Card from '../components/Card';
+import { userProfileHelpers, UserProfile } from '../utils/firebaseHelpers';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams();
@@ -26,6 +30,85 @@ export default function UserProfileScreen() {
     'monthly' | 'weekly' | 'daily'
   >('daily');
   const [addFriendVisible, setAddFriendVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [editProfileVisible, setEditProfileVisible] = useState(false);
+  const [editForm, setEditForm] = useState({
+    displayName: '',
+    bio: '',
+  });
+
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadUserProfile(user.uid);
+      } else {
+        setUserProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ユーザープロフィールを読み込み
+  const loadUserProfile = async (userId: string) => {
+    try {
+      setLoading(true);
+      const profile = await userProfileHelpers.getUserProfile(userId);
+      setUserProfile(profile);
+
+      if (profile) {
+        setEditForm({
+          displayName: profile.displayName,
+          bio: profile.bio || '',
+        });
+      } else {
+        // プロフィールが存在しない場合はデフォルト値で初期化
+        setEditForm({
+          displayName: currentUser?.displayName || '',
+          bio: '',
+        });
+      }
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      Alert.alert('エラー', 'プロフィールの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // プロフィールを更新
+  const updateProfile = async () => {
+    if (!currentUser) return;
+
+    try {
+      const profileData = {
+        userId: currentUser.uid,
+        displayName: editForm.displayName.trim(),
+        email: currentUser.email || '',
+        bio: editForm.bio.trim(),
+      };
+
+      await userProfileHelpers.upsertUserProfile(profileData);
+
+      setUserProfile({
+        id: '',
+        ...profileData,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      });
+
+      setEditProfileVisible(false);
+      Alert.alert('成功', 'プロフィールを更新しました');
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      Alert.alert('エラー', 'プロフィールの更新に失敗しました');
+    }
+  };
 
   // サンプルユーザーデータ（実際のアプリではAPIから取得）
   const userData = {
@@ -697,13 +780,23 @@ export default function UserProfileScreen() {
           </View>
           <View style={styles.userDetails}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName}>{user.name}</Text>
-              <TouchableOpacity
-                style={styles.addFriendButton}
-                onPress={handleAddFriend}
-              >
-                <MaterialIcons name="person-add" size={20} color="#5c6bc0" />
-              </TouchableOpacity>
+              <Text style={styles.userName}>
+                {userProfile?.displayName || user.name}
+              </Text>
+              <View style={styles.buttonRow}>
+                <TouchableOpacity
+                  style={styles.editProfileButton}
+                  onPress={() => setEditProfileVisible(true)}
+                >
+                  <MaterialIcons name="edit" size={20} color="#5c6bc0" />
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={styles.addFriendButton}
+                  onPress={handleAddFriend}
+                >
+                  <MaterialIcons name="person-add" size={20} color="#5c6bc0" />
+                </TouchableOpacity>
+              </View>
             </View>
             <Text style={styles.username}>{user.username}</Text>
             <Text style={styles.lastActive}>
@@ -711,7 +804,7 @@ export default function UserProfileScreen() {
             </Text>
           </View>
         </View>
-        <Text style={styles.bio}>{user.bio}</Text>
+        <Text style={styles.bio}>{userProfile?.bio || user.bio}</Text>
       </View>
 
       {/* タブ切り替え */}
@@ -789,6 +882,55 @@ export default function UserProfileScreen() {
           </View>
         </View>
       </Modal>
+
+      {/* プロフィール編集モーダル */}
+      <Modal
+        visible={editProfileVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setEditProfileVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>プロフィールを編集</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="表示名"
+              value={editForm.displayName}
+              onChangeText={(text) =>
+                setEditForm((prev) => ({ ...prev, displayName: text }))
+              }
+            />
+
+            <TextInput
+              style={[styles.modalInput, styles.bioInput]}
+              placeholder="自己紹介"
+              value={editForm.bio}
+              onChangeText={(text) =>
+                setEditForm((prev) => ({ ...prev, bio: text }))
+              }
+              multiline
+              numberOfLines={4}
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalCancel]}
+                onPress={() => setEditProfileVisible(false)}
+              >
+                <Text style={styles.modalBtnText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalConfirm]}
+                onPress={updateProfile}
+              >
+                <Text style={styles.modalBtnText}>保存</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -802,6 +944,16 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: '#f0f0f0',
+  },
+  editProfileButton: {
+    padding: 8,
+    borderRadius: 20,
+    backgroundColor: '#f0f0f0',
+    marginRight: 8,
+  },
+  buttonRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
   },
   nameRow: {
     flexDirection: 'row',
@@ -1165,29 +1317,58 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
     width: '100%',
     maxWidth: 400,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 16,
+    marginBottom: 20,
     textAlign: 'center',
   },
-  modalText: {
+  modalInput: {
+    borderWidth: 1,
+    borderColor: '#e0e0e0',
+    borderRadius: 8,
+    padding: 12,
     fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
-    textAlign: 'center',
-    lineHeight: 24,
+    marginBottom: 16,
+    backgroundColor: '#fafafa',
+  },
+  bioInput: {
+    height: 80,
+    textAlignVertical: 'top',
   },
   modalButtons: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     gap: 12,
+  },
+  modalBtn: {
+    flex: 1,
+    paddingVertical: 12,
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCancel: {
+    backgroundColor: '#f0f0f0',
+  },
+  modalConfirm: {
+    backgroundColor: '#5c6bc0',
+  },
+  modalBtnText: {
+    fontSize: 16,
+    fontWeight: '600',
+    color: '#333',
   },
   modalButton: {
     flex: 1,

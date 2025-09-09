@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,8 +10,11 @@ import {
   Alert,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config';
 import BottomNavigation from '../components/BottomNavigation';
 import Header from '../components/Header';
+import { notificationHelpers, Notification } from '../utils/firebaseHelpers';
 
 // サンプル通知データ
 const notificationsData = [
@@ -66,24 +69,77 @@ const notificationsData = [
 ];
 
 export default function NotificationsScreen() {
-  const [notifications, setNotifications] = useState(notificationsData);
+  const [notifications, setNotifications] = useState<Notification[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const handleAcceptFriend = (notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === notificationId ? { ...notif, status: 'accepted' } : notif
-      )
-    );
-    Alert.alert('友達申請を承認しました', '新しい友達が追加されました！');
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadNotifications(user.uid);
+      } else {
+        setNotifications([]);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // 通知を読み込み
+  const loadNotifications = async (userId: string) => {
+    try {
+      setLoading(true);
+      const userNotifications = await notificationHelpers.getUserNotifications(
+        userId
+      );
+      setNotifications(userNotifications);
+    } catch (error) {
+      console.error('Error loading notifications:', error);
+      Alert.alert('エラー', '通知の読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
   };
 
-  const handleDeclineFriend = (notificationId: string) => {
-    setNotifications((prev) =>
-      prev.map((notif) =>
-        notif.id === notificationId ? { ...notif, status: 'declined' } : notif
-      )
-    );
-    Alert.alert('友達申請を拒否しました');
+  const handleAcceptFriend = async (notificationId: string) => {
+    try {
+      // Firebaseで通知を既読にする
+      await notificationHelpers.markNotificationAsRead(notificationId);
+
+      // ローカル状態を更新
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+
+      Alert.alert('友達申請を承認しました', '新しい友達が追加されました！');
+    } catch (error) {
+      console.error('Error accepting friend request:', error);
+      Alert.alert('エラー', '友達申請の承認に失敗しました');
+    }
+  };
+
+  const handleDeclineFriend = async (notificationId: string) => {
+    try {
+      // Firebaseで通知を既読にする
+      await notificationHelpers.markNotificationAsRead(notificationId);
+
+      // ローカル状態を更新
+      setNotifications((prev) =>
+        prev.map((notif) =>
+          notif.id === notificationId ? { ...notif, read: true } : notif
+        )
+      );
+
+      Alert.alert('友達申請を拒否しました');
+    } catch (error) {
+      console.error('Error declining friend request:', error);
+      Alert.alert('エラー', '友達申請の拒否に失敗しました');
+    }
   };
 
   const getStatusColor = (status: string) => {
@@ -180,14 +236,14 @@ export default function NotificationsScreen() {
               <View style={styles.actionButtons}>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.acceptButton]}
-                  onPress={() => handleAcceptFriend(notification.id)}
+                  onPress={() => handleAcceptFriend(notification.id || '')}
                 >
                   <MaterialIcons name="check" size={16} color="#fff" />
                   <Text style={styles.acceptButtonText}>承認</Text>
                 </TouchableOpacity>
                 <TouchableOpacity
                   style={[styles.actionButton, styles.declineButton]}
-                  onPress={() => handleDeclineFriend(notification.id)}
+                  onPress={() => handleDeclineFriend(notification.id || '')}
                 >
                   <MaterialIcons name="close" size={16} color="#fff" />
                   <Text style={styles.declineButtonText}>拒否</Text>

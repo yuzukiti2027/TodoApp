@@ -1,16 +1,16 @@
-import { Text } from "react-native"
+import { Text } from 'react-native';
 
-const FriendScreen = () =>{
-    return(
+const FriendScreen = () => {
+  return (
     <>
-    <Text>フレンドページです</Text>
-    <Text>フレンドページです</Text>
-    <Text>フレンドページです</Text>
-    <Text>フレンドページです</Text>
-    <Text>フレンドページです</Text>
-    <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
+      <Text>フレンドページです</Text>
     </>
-    )
-}
+  );
+};
 
-export default FriendScreen
+export default FriendScreen;

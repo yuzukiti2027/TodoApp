@@ -7,33 +7,33 @@ import {
   Image,
   SafeAreaView,
   TouchableOpacity,
-  Alert
-} from "react-native";
-import { useState } from "react";
-import { Link, router } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import Button from "../../components/Button";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../config";
+  Alert,
+} from 'react-native';
+import { useState } from 'react';
+import { Link, router } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Button from '../../components/Button';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../config';
 // import Header from "../../components/Header";
 // import Footer from "../../components/Footer";
 
 const Login = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleLoginPress = (email: string, password: string) => {
     //ログイン
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user.uid);
-        router.replace("../Mypage/Mypage.tsx");
+        router.replace('../screens/StudyTimeScreen');
       })
-      .catch((e)=>{
-        const {code, message} = e;
-        console.log(code,  message);
+      .catch((e) => {
+        const { code, message } = e;
+        console.log(code, message);
         Alert.alert(message);
-      })
+      });
   };
 
   return (
@@ -47,7 +47,7 @@ const Login = () => {
           </View>
           <View style={styles.inputFlame}>
             <Image
-              source={require("../../../assets/kkrn_icon_user_13.png")}
+              source={require('../../../assets/kkrn_icon_user_13.png')}
               style={styles.image}
             />
             <TextInput
@@ -62,7 +62,7 @@ const Login = () => {
           </View>
           <View style={styles.inputFlame}>
             <Image
-              source={require("../../../assets/kkrn_icon_kagi_21.png")}
+              source={require('../../../assets/kkrn_icon_kagi_21.png')}
               style={styles.image}
             />
             <TextInput
@@ -75,10 +75,15 @@ const Login = () => {
               textContentType="password"
             />
           </View>
-          <Button onPress={() => {handleLoginPress(email, password)}} label="ログイン" />
+          <Button
+            onPress={() => {
+              handleLoginPress(email, password);
+            }}
+            label="ログイン"
+          />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
-            <Link href="../Signin/Signin" asChild replace>
+            <Link href="../screens/SigninScreen" asChild replace>
               <TouchableOpacity>
                 <Text style={styles.SignInLink}>新規登録</Text>
               </TouchableOpacity>
@@ -94,28 +99,28 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between", //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
-    backgroundColor: "white",
+    justifyContent: 'space-between', //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
+    backgroundColor: 'white',
   },
   content: {
     flex: 1,
     gap: 32, // 要素間のスペースを設定
-    alignItems: "center",
-    justifyContent: "flex-start",
+    alignItems: 'center',
+    justifyContent: 'flex-start',
   },
   titleFlame: {
     marginTop: 56,
   },
   titleText: {
     fontSize: 40,
-    textAlign: "center",
-    color: "#8b8b8bff",
+    textAlign: 'center',
+    color: '#8b8b8bff',
   },
   inputFlame: {
     height: 56,
-    width: "80%",
-    flexDirection: "row",
-    borderColor: "gray",
+    width: '80%',
+    flexDirection: 'row',
+    borderColor: 'gray',
     borderWidth: 1,
     borderRadius: 8, //角を丸くする
   },
@@ -131,32 +136,32 @@ const styles = StyleSheet.create({
     // borderColor: 'gray',
     // borderWidth: 1,
     flex: 1,
-    width: "72%",
+    width: '72%',
     height: 56,
     paddingHorizontal: 8, //左右のpadding
     fontSize: 20,
   },
   text: {
-    color: "white",
-    backgroundColor: "blue",
+    color: 'white',
+    backgroundColor: 'blue',
     fontSize: 40,
-    fontWeight: "bold",
+    fontWeight: 'bold',
     padding: 16,
   },
   debug: {
     // デバッグ用のスタイル
     borderWidth: 2,
-    borderColor: "red",
+    borderColor: 'red',
   },
   ToSignIn: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
   },
   SignInLink: {
-    color: "blue",
-    textDecorationLine: "underline", // 下線を引く
+    color: 'blue',
+    textDecorationLine: 'underline', // 下線を引く
   },
 });
 
