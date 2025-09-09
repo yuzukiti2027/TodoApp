@@ -78,7 +78,7 @@ const Login = () => {
           <Button onPress={() => {handleLoginPress(email, password)}} label="ログイン" />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
-            <Link href="../Signin/Signin" asChild replace>
+            <Link href="../screens/SigninScreen" asChild replace>
               <TouchableOpacity>
                 <Text style={styles.SignInLink}>新規登録</Text>
               </TouchableOpacity>

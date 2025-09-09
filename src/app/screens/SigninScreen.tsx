@@ -74,7 +74,7 @@ const Signin = () => {
         <Button label="新規登録" onPress={() => handleSignInPress(email, password)} />{/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
         <View style={styles.ToLogIn}>
           <Text>アカウントをお持ちですか？</Text>
-          <Link href={"../Login/Login"} asChild>
+          <Link href={"../screens/LoginScreen"} asChild>
             <TouchableOpacity>
               <Text style={styles.LogInLink}>ログイン</Text>
             </TouchableOpacity>
