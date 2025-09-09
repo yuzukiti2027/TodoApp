@@ -1,36 +1,113 @@
-import { Text, StyleSheet, Pressable, TouchableOpacity } from "react-native";
+import React from 'react';
+import {
+  TouchableOpacity,
+  Text,
+  StyleSheet,
+  ViewStyle,
+  TextStyle,
+} from 'react-native';
 
-type ButtonProps = {
-  onPress?: () => void; //関数が入るような変数
-  label?: string;
-};
+interface ButtonProps {
+  title: string;
+  onPress: () => void;
+  variant?: 'primary' | 'secondary' | 'outline';
+  size?: 'small' | 'medium' | 'large';
+  disabled?: boolean;
+  style?: ViewStyle;
+  textStyle?: TextStyle;
+}
 
-const Button = ({ onPress, label }: ButtonProps) => {
+export default function Button({
+  title,
+  onPress,
+  variant = 'primary',
+  size = 'medium',
+  disabled = false,
+  style,
+  textStyle,
+}: ButtonProps) {
+  const buttonStyle = [
+    styles.button,
+    styles[variant],
+    styles[size],
+    disabled && styles.disabled,
+    style,
+  ];
+
+  const textStyleCombined = [
+    styles.text,
+    styles[`${variant}Text`],
+    styles[`${size}Text`],
+    disabled && styles.disabledText,
+    textStyle,
+  ];
+
   return (
-    <TouchableOpacity onPress={onPress} style={styles.button}>
-      <Text style={styles.buttonLabel}>{label}</Text>
+    <TouchableOpacity
+      style={buttonStyle}
+      onPress={onPress}
+      disabled={disabled}
+      activeOpacity={0.8}
+    >
+      <Text style={textStyleCombined}>{title}</Text>
     </TouchableOpacity>
   );
-};
+}
 
 const styles = StyleSheet.create({
   button: {
-    width: "30%",
-    height: 45,
     borderRadius: 8,
-    backgroundColor: "orange",
-    justifyContent: "center",
-    textAlign: "right",
-    position: "relative",
-    bottom: 0, // フッターの上に配置
-    left: 95, // 中央に配置
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  buttonLabel: {
-    textAlign: "center",
-    color: "#0000FF",
-    fontSize: 20,
-    fontWeight: "bold",
+  primary: {
+    backgroundColor: '#5c6bc0',
+  },
+  secondary: {
+    backgroundColor: '#f5f5f5',
+  },
+  outline: {
+    backgroundColor: 'transparent',
+    borderWidth: 1,
+    borderColor: '#5c6bc0',
+  },
+  small: {
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+  },
+  medium: {
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+  },
+  large: {
+    paddingVertical: 16,
+    paddingHorizontal: 32,
+  },
+  disabled: {
+    opacity: 0.5,
+  },
+  text: {
+    fontWeight: '600',
+  },
+  primaryText: {
+    color: '#fff',
+  },
+  secondaryText: {
+    color: '#333',
+  },
+  outlineText: {
+    color: '#5c6bc0',
+  },
+  smallText: {
+    fontSize: 12,
+  },
+  mediumText: {
+    fontSize: 14,
+  },
+  largeText: {
+    fontSize: 16,
+  },
+  disabledText: {
+    color: '#999',
   },
 });
-
-export default Button;
