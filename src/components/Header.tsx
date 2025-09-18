@@ -31,7 +31,7 @@ export default function Header({
         <View style={styles.headerLeft}>
           {showBackButton && (
             <TouchableOpacity style={styles.backButton} onPress={onBackPress}>
-              <MaterialIcons name="arrow-back" size={24} color="#333" />
+              <MaterialIcons name="arrow-back" size={28} color="#333" />
             </TouchableOpacity>
           )}
         </View>
@@ -48,7 +48,7 @@ export default function Header({
             >
               <MaterialIcons
                 name={rightButton.icon as any}
-                size={24}
+                size={28}
                 color="#333"
               />
             </TouchableOpacity>
@@ -65,7 +65,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 20,
-    paddingTop: 50,
+    paddingTop: 70,
     paddingBottom: 16,
     backgroundColor: '#fff',
     borderBottomWidth: 1,

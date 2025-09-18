@@ -10,11 +10,15 @@ import {
   TextInput,
   Platform,
   KeyboardAvoidingView,
+  Alert,
 } from 'react-native';
 import { Link } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../config';
 import BottomNavigation from '../../components/BottomNavigation';
 import Header from '../../components/Header';
+import { studyTimeHelpers, StudyTime } from '../../utils/firebaseHelpers';
 
 export default function MyPageScreen() {
   const [viewMode, setViewMode] = useState<'subject' | 'daily'>('subject'); // 表示モードの状態
@@ -23,6 +27,16 @@ export default function MyPageScreen() {
   const [selectedDate, setSelectedDate] = useState(''); // 選択された日付
   const [subjectDetailVisible, setSubjectDetailVisible] = useState(false); // 科目別詳細モーダルの表示状態
   const [selectedSubject, setSelectedSubject] = useState(''); // 選択された科目
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [studyTimes, setStudyTimes] = useState<StudyTime[]>([]);
+  const [addStudyTimeModalVisible, setAddStudyTimeModalVisible] =
+    useState(false);
+  const [newStudyTime, setNewStudyTime] = useState({
+    subject: '',
+    duration: '',
+    date: new Date().toISOString().split('T')[0],
+  });
   const [subjectsData, setSubjectsData] = useState([
     {
       label: '国語',
@@ -72,6 +86,134 @@ export default function MyPageScreen() {
     },
   ]);
 
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadUserStudyTimes(user.uid);
+      } else {
+        setStudyTimes([]);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ユーザーの勉強時間データを読み込み
+  const loadUserStudyTimes = async (userId: string) => {
+    try {
+      setLoading(true);
+      const userStudyTimes = await studyTimeHelpers.getUserStudyTimes(userId);
+      setStudyTimes(userStudyTimes);
+
+      // FirebaseのデータをsubjectsDataの形式に変換
+      const updatedSubjectsData = subjectsData.map((subject) => {
+        const subjectStudyTimes = userStudyTimes.filter(
+          (st) => st.subject === subject.label
+        );
+        const studyRecords = subjectStudyTimes.map((st) => ({
+          date: st.date,
+          hours: st.duration / 60, // 分を時間に変換
+          content: '', // Firebaseにはcontentフィールドがないので空文字
+        }));
+
+        return {
+          ...subject,
+          studyRecords:
+            studyRecords.length > 0 ? studyRecords : subject.studyRecords,
+        };
+      });
+
+      setSubjectsData(updatedSubjectsData);
+    } catch (error) {
+      Alert.alert('エラー', '勉強時間データの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // 勉強時間を追加
+  const addStudyTime = async () => {
+    if (!currentUser) return;
+
+    const duration = parseFloat(newStudyTime.duration);
+    if (!newStudyTime.subject.trim() || isNaN(duration) || duration <= 0) {
+      Alert.alert('エラー', '科目名と勉強時間を正しく入力してください');
+      return;
+    }
+
+    try {
+      const studyTimeData = {
+        subject: newStudyTime.subject.trim(),
+        duration: duration * 60, // 時間を分に変換
+        date: newStudyTime.date,
+        userId: currentUser.uid,
+      };
+
+      const studyTimeId = await studyTimeHelpers.addStudyTime(studyTimeData);
+
+      // ローカル状態を更新
+      const newStudyTimeRecord = {
+        id: studyTimeId,
+        ...studyTimeData,
+      };
+
+      setStudyTimes((prev) => [newStudyTimeRecord, ...prev]);
+
+      // subjectsDataを更新
+      setSubjectsData((prev) => {
+        const updated = [...prev];
+        const subjectIndex = updated.findIndex(
+          (s) => s.label === newStudyTime.subject.trim()
+        );
+
+        if (subjectIndex !== -1) {
+          const existingRecord = updated[subjectIndex].studyRecords.find(
+            (r) => r.date === newStudyTime.date
+          );
+
+          if (existingRecord) {
+            existingRecord.hours += duration;
+          } else {
+            updated[subjectIndex].studyRecords.push({
+              date: newStudyTime.date,
+              hours: duration,
+              content: '',
+            });
+          }
+        } else {
+          // 新しい科目を追加
+          updated.push({
+            label: newStudyTime.subject.trim(),
+            studyRecords: [
+              {
+                date: newStudyTime.date,
+                hours: duration,
+                content: '',
+              },
+            ],
+          });
+        }
+
+        return updated;
+      });
+
+      // モーダルを閉じてフォームをリセット
+      setAddStudyTimeModalVisible(false);
+      setNewStudyTime({
+        subject: '',
+        duration: '',
+        date: new Date().toISOString().split('T')[0],
+      });
+
+      Alert.alert('成功', '勉強時間を追加しました');
+    } catch (error) {
+      Alert.alert('エラー', '勉強時間の追加に失敗しました');
+    }
+  };
+
   const maxYAxisHours = useMemo(() => {
     const maxTotalHours = Math.max(
       0,
@@ -93,14 +235,6 @@ export default function MyPageScreen() {
       const steps = Math.ceil((maxTotalHours - 200) / 50);
       max = 200 + steps * 50;
     }
-    console.log(
-      'maxYAxisHours calculated:',
-      max,
-      'maxTotalHours:',
-      maxTotalHours,
-      'from subjectsData:',
-      subjectsData
-    );
     return max;
   }, [subjectsData]);
 
@@ -241,11 +375,6 @@ export default function MyPageScreen() {
     return max;
   }, [dailyData]);
 
-  // データ変更を監視
-  useEffect(() => {
-    console.log('subjectsData changed:', subjectsData);
-  }, [subjectsData]);
-
   // Y軸のラベルとグリッドラインを生成
   const generateYAxisLabels = () => {
     const labels = [];
@@ -365,27 +494,16 @@ export default function MyPageScreen() {
     // 日付を構築
     const dateString = `${addYear}-${addMonth}-${addDay}`;
 
-    console.log('Adding time:', {
-      label,
-      hours,
-      dateString,
-      addMode,
-      selectedSubjectIndex,
-    });
-
     // バリデーション
     if (addMode === 'existing' && selectedSubjectIndex === null) {
-      console.log('既存科目が選択されていません');
       setAddVisible(false);
       return;
     }
     if (addMode === 'new' && !label) {
-      console.log('新規科目の名前が入力されていません');
       setAddVisible(false);
       return;
     }
     if (isNaN(hours) || hours < 0) {
-      console.log('無効な時間です:', hours);
       setAddVisible(false);
       return;
     }
@@ -418,7 +536,6 @@ export default function MyPageScreen() {
           });
         }
 
-        console.log('Updated existing subject:', next[selectedSubjectIndex]);
         return next;
       });
     } else {
@@ -452,7 +569,6 @@ export default function MyPageScreen() {
             });
           }
 
-          console.log('Updated existing subject by name:', next[idx]);
           return next;
         }
         // 新規科目を作成
@@ -469,7 +585,6 @@ export default function MyPageScreen() {
             ],
           },
         ];
-        console.log('Created new subject:', newData[newData.length - 1]);
         return newData;
       });
     }
@@ -642,9 +757,6 @@ export default function MyPageScreen() {
                         totalHours > 0
                           ? Math.max(2, (totalHours / maxYAxisHours) * 240)
                           : 0;
-                      console.log(
-                        `Graph rendering - ${item.label}: totalHours=${totalHours}, height=${height}, maxYAxisHours=${maxYAxisHours}`
-                      );
                       return (
                         <View key={i} style={styles.barGroup}>
                           <Text style={styles.barHours}>{totalHours}h</Text>
@@ -702,14 +814,6 @@ export default function MyPageScreen() {
             </View>
           </ScrollView>
         </View>
-      </View>
-
-      {/* 時間の追加ボタン */}
-      <View style={styles.addButtonContainer}>
-        <TouchableOpacity style={styles.addButton} onPress={openAdd}>
-          <MaterialIcons name="add-circle-outline" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>時間の追加</Text>
-        </TouchableOpacity>
       </View>
 
       {/* 追加モーダル */}
@@ -1071,6 +1175,74 @@ export default function MyPageScreen() {
         </View>
       </Modal>
 
+      {/* 勉強時間追加モーダル */}
+      <Modal
+        visible={addStudyTimeModalVisible}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setAddStudyTimeModalVisible(false)}
+      >
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.modalOverlay}
+        >
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>勉強時間を追加</Text>
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="科目名"
+              value={newStudyTime.subject}
+              onChangeText={(text) =>
+                setNewStudyTime((prev) => ({ ...prev, subject: text }))
+              }
+            />
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="勉強時間（時間）"
+              value={newStudyTime.duration}
+              onChangeText={(text) =>
+                setNewStudyTime((prev) => ({ ...prev, duration: text }))
+              }
+              keyboardType="numeric"
+            />
+
+            <TextInput
+              style={styles.modalInput}
+              placeholder="日付"
+              value={newStudyTime.date}
+              onChangeText={(text) =>
+                setNewStudyTime((prev) => ({ ...prev, date: text }))
+              }
+            />
+
+            <View style={styles.modalButtons}>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalCancel]}
+                onPress={() => setAddStudyTimeModalVisible(false)}
+              >
+                <Text style={styles.modalBtnText}>キャンセル</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                style={[styles.modalBtn, styles.modalConfirm]}
+                onPress={addStudyTime}
+              >
+                <Text style={styles.modalBtnText}>追加</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </KeyboardAvoidingView>
+      </Modal>
+
+      {/* 時間の追加ボタン */}
+      <View style={styles.addButtonContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={openAdd}>
+          <MaterialIcons name="add-circle-outline" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>時間の追加</Text>
+        </TouchableOpacity>
+      </View>
+
       <BottomNavigation activeTab="study" />
     </View>
   );
@@ -1108,7 +1280,7 @@ const styles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 20,
     alignItems: 'center',
     width: '100%',
     justifyContent: 'center',
@@ -1493,56 +1665,6 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // 日別詳細モーダルのスタイル
-  dailyDetailContent: {
-    maxHeight: 400,
-  },
-  dailyDetailItem: {
-    marginBottom: 16,
-  },
-  dailyDetailSubjectInfo: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 8,
-  },
-  dailyDetailSubjectLabel: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#333',
-  },
-  dailyDetailHours: {
-    fontSize: 16,
-    fontWeight: 'bold',
-    color: '#5c6bc0',
-  },
-  dailyDetailContent: {
-    fontSize: 14,
-    color: '#666',
-    marginTop: 4,
-    marginBottom: 8,
-    lineHeight: 20,
-  },
-  dailyDetailProgressBar: {
-    height: 8,
-    backgroundColor: '#f0f0f0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  dailyDetailProgressFill: {
-    height: '100%',
-    backgroundColor: '#5c6bc0',
-    borderRadius: 4,
-  },
-  dailyDetailEmpty: {
-    alignItems: 'center',
-    paddingVertical: 40,
-  },
-  dailyDetailEmptyText: {
-    fontSize: 16,
-    color: '#999',
-    marginTop: 16,
-  },
   addButtonContainer: {
     alignItems: 'center',
     paddingVertical: 20,
@@ -1574,6 +1696,49 @@ const styles = StyleSheet.create({
     color: '#fff',
     fontSize: 16,
     fontWeight: 'bold',
+  },
+  // 日別詳細モーダルのスタイル
+  dailyDetailContent: {
+    maxHeight: 400,
+  },
+  dailyDetailItem: {
+    marginBottom: 16,
+  },
+  dailyDetailSubjectInfo: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  dailyDetailSubjectLabel: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#333',
+  },
+  dailyDetailHours: {
+    fontSize: 16,
+    fontWeight: 'bold',
+    color: '#5c6bc0',
+  },
+  dailyDetailProgressBar: {
+    height: 8,
+    backgroundColor: '#f0f0f0',
+    borderRadius: 4,
+    overflow: 'hidden',
+  },
+  dailyDetailProgressFill: {
+    height: '100%',
+    backgroundColor: '#5c6bc0',
+    borderRadius: 4,
+  },
+  dailyDetailEmpty: {
+    alignItems: 'center',
+    paddingVertical: 40,
+  },
+  dailyDetailEmptyText: {
+    fontSize: 16,
+    color: '#999',
+    marginTop: 16,
   },
   totalHoursContainer: {
     alignItems: 'center',

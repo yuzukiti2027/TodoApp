@@ -7,33 +7,33 @@ import {
   Image,
   SafeAreaView,
   TouchableOpacity,
-  Alert
-} from "react-native";
-import { useState } from "react";
-import { Link, router } from "expo-router";
-import { SafeAreaProvider } from "react-native-safe-area-context";
-import Button from "../../components/Button";
-import { signInWithEmailAndPassword } from "firebase/auth";
-import { auth } from "../../config";
+  Alert,
+} from 'react-native';
+import { useState } from 'react';
+import { Link, router } from 'expo-router';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import Button from '../../components/Button';
+import { signInWithEmailAndPassword } from 'firebase/auth';
+import { auth } from '../../config';
 // import Header from "../../components/Header";
 // import Footer from "../../components/Footer";
 
 const Login = () => {
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
+  const [email, setEmail] = useState<string>('');
+  const [password, setPassword] = useState<string>('');
 
   const handleLoginPress = (email: string, password: string) => {
     //ログイン
     signInWithEmailAndPassword(auth, email, password)
       .then((userCredential) => {
         console.log(userCredential.user.uid);
-        router.replace("../screens/MypageScreen");
+        router.replace('../screens/StudyTimeScreen');
       })
-      .catch((e)=>{
-        const {code, message} = e;
-        console.log(code,  message);
+      .catch((e) => {
+        const { code, message } = e;
+        console.log(code, message);
         Alert.alert(message);
-      })
+      });
   };
 
   return (
@@ -47,14 +47,15 @@ const Login = () => {
           </View>
           <View style={styles.inputFlame}>
             <Image
-              source={require("../../../assets/kkrn_icon_user_13.png")}
+              source={require('../../../assets/kkrn_icon_user_13.png')}
               style={styles.image}
             />
             <TextInput
               value={email}
               onChangeText={setEmail}
               style={styles.input}
-              placeholder="Username"
+              placeholder="ユーザーネーム"
+              placeholderTextColor="#999"
               autoCapitalize="none"
               keyboardType="email-address"
               textContentType="emailAddress"
@@ -62,20 +63,28 @@ const Login = () => {
           </View>
           <View style={styles.inputFlame}>
             <Image
-              source={require("../../../assets/kkrn_icon_kagi_21.png")}
+              source={require('../../../assets/kkrn_icon_kagi_21.png')}
               style={styles.image}
             />
             <TextInput
               value={password}
               onChangeText={setPassword}
               style={styles.input}
-              placeholder="Password"
+              placeholder="パスワード"
+              placeholderTextColor="#999"
               secureTextEntry // パスワード入力用に追記するとより良い
               autoCapitalize="none"
               textContentType="password"
             />
           </View>
-          <Button onPress={() => {handleLoginPress(email, password)}} label="ログイン" />
+          <Button
+            onPress={() => {
+              handleLoginPress(email, password);
+            }}
+            title="ログイン"
+            size="medium"
+            style={{ width: '30%', marginTop: 8 }}
+          />
           <View style={styles.ToSignIn}>
             <Text>アカウントをお持ちでないですか？</Text>
             <Link href="../screens/SigninScreen" asChild replace>
@@ -94,69 +103,62 @@ const Login = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: "space-between", //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
-    backgroundColor: "white",
+    backgroundColor: '#f8f9fb',
   },
   content: {
     flex: 1,
-    gap: 32, // 要素間のスペースを設定
-    alignItems: "center",
-    justifyContent: "flex-start",
+    paddingHorizontal: 32,
+    paddingTop: 80,
+    alignItems: 'center',
   },
   titleFlame: {
-    marginTop: 56,
+    marginBottom: 48,
+    alignItems: 'center',
   },
   titleText: {
-    fontSize: 40,
-    textAlign: "center",
-    color: "#8b8b8bff",
+    fontSize: 32,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    color: '#333',
+    marginBottom: 8,
   },
   inputFlame: {
-    height: 56,
-    width: "80%",
-    flexDirection: "row",
-    borderColor: "gray",
-    borderWidth: 1,
-    borderRadius: 8, //角を丸くする
+    width: '100%',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   image: {
-    // borderColor: 'gray',
-    // borderWidth: 1,
-    marginTop: 3,
-    marginLeft: 8,
-    width: 50,
-    height: 50,
+    width: 24,
+    height: 24,
+    marginRight: 12,
   },
   input: {
-    // borderColor: 'gray',
-    // borderWidth: 1,
     flex: 1,
-    width: "72%",
-    height: 56,
-    paddingHorizontal: 8, //左右のpadding
-    fontSize: 20,
-  },
-  text: {
-    color: "white",
-    backgroundColor: "blue",
-    fontSize: 40,
-    fontWeight: "bold",
-    padding: 16,
-  },
-  debug: {
-    // デバッグ用のスタイル
-    borderWidth: 2,
-    borderColor: "red",
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 4,
   },
   ToSignIn: {
-    flexDirection: "row",
-    justifyContent: "center",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
     gap: 8,
+    marginTop: 24,
   },
   SignInLink: {
-    color: "blue",
-    textDecorationLine: "underline", // 下線を引く
+    color: '#5c6bc0',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

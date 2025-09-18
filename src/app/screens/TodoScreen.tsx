@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
@@ -10,108 +10,116 @@ import {
   KeyboardAvoidingView,
   Platform,
   Modal,
+  Alert,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../../config';
 import BottomNavigation from '../../components/BottomNavigation';
 import Header from '../../components/Header';
+import {
+  todoHelpers,
+  achievementHelpers,
+  TodoItem,
+  Achievement,
+} from '../../utils/firebaseHelpers';
 
 export default function TodoScreen() {
   const [viewMode, setViewMode] = useState<'monthly' | 'weekly' | 'daily'>(
     'daily'
   );
-  const [achievements, setAchievements] = useState<
-    Array<{
-      id: string;
-      itemId: number;
-      itemLabel: string;
-      category: 'daily' | 'weekly' | 'monthly';
-      achievedAt: string;
-      period: string; // 日別: YYYY-MM-DD, 週別: YYYY-WW, 月別: YYYY-MM
-    }>
-  >([]);
-  const [items, setItems] = useState([
-    {
-      label: '洗濯ものをする',
-      done: false,
-      priority: 'high',
-      category: 'daily',
-    },
-    {
-      label: '数学の宿題',
-      done: true,
-      priority: 'medium',
-      category: 'daily',
-    },
-    {
-      label: '英語の単語テスト',
-      done: false,
-      priority: 'high',
-      category: 'weekly',
-    },
-    {
-      label: '部屋の掃除',
-      done: false,
-      priority: 'low',
-      category: 'daily',
-    },
-    {
-      label: '物理の実験レポート',
-      done: false,
-      priority: 'high',
-      category: 'monthly',
-    },
-    {
-      label: '買い物に行く',
-      done: true,
-      priority: 'medium',
-      category: 'daily',
-    },
-    {
-      label: '友達と会う',
-      done: false,
-      priority: 'low',
-      category: 'weekly',
-    },
-    {
-      label: '読書',
-      done: false,
-      priority: 'medium',
-      category: 'daily',
-    },
-  ]);
+  const [achievements, setAchievements] = useState<Achievement[]>([]);
+  const [items, setItems] = useState<TodoItem[]>([]);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
 
-  const toggleItem = (index: number) => {
-    setItems((prev) => {
-      const next = [...prev];
-      const item = next[index];
-      const wasDone = item.done;
-      next[index] = { ...next[index], done: !next[index].done };
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadUserData(user.uid);
+      } else {
+        setItems([]);
+        setAchievements([]);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ユーザーデータを読み込み
+  const loadUserData = async (userId: string) => {
+    try {
+      setLoading(true);
+      const [todos, userAchievements] = await Promise.all([
+        todoHelpers.getUserTodos(userId),
+        achievementHelpers.getUserAchievements(userId),
+      ]);
+
+      setItems(todos);
+      setAchievements(userAchievements);
+    } catch (error) {
+      console.error('Error loading user data:', error);
+      Alert.alert('エラー', 'データの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const toggleItem = async (index: number) => {
+    if (!currentUser) return;
+
+    const item = items[index];
+    const wasDone = item.done;
+    const newDoneState = !item.done;
+
+    try {
+      // FirebaseでTodoアイテムを更新
+      if (item.id) {
+        await todoHelpers.updateTodoItem(item.id, { done: newDoneState });
+      }
+
+      // ローカル状態を更新
+      setItems((prev) => {
+        const next = [...prev];
+        next[index] = { ...next[index], done: newDoneState };
+        return next;
+      });
 
       // 項目が完了状態になった場合、達成記録を追加
-      if (!wasDone && next[index].done) {
-        const achievementId = `${Date.now()}-${Math.random()
-          .toString(36)
-          .substr(2, 9)}`;
+      if (!wasDone && newDoneState) {
         const currentPeriod = getCurrentPeriod(
           item.category as 'daily' | 'weekly' | 'monthly'
+        );
+
+        const achievementData = {
+          itemId: item.id || '',
+          itemLabel: item.label,
+          category: item.category as 'daily' | 'weekly' | 'monthly',
+          achievedAt: new Date().toISOString(),
+          period: currentPeriod,
+          userId: currentUser.uid,
+        };
+
+        const achievementId = await achievementHelpers.addAchievement(
+          achievementData
         );
 
         setAchievements((prevAchievements) => [
           ...prevAchievements,
           {
             id: achievementId,
-            itemId: index,
-            itemLabel: item.label,
-            category: item.category as 'daily' | 'weekly' | 'monthly',
-            achievedAt: new Date().toISOString(),
-            period: currentPeriod,
+            ...achievementData,
           },
         ]);
       }
-
-      return next;
-    });
+    } catch (error) {
+      console.error('Error toggling item:', error);
+      Alert.alert('エラー', 'Todoの更新に失敗しました');
+    }
   };
 
   // カテゴリに基づいてTODOをフィルタリング
@@ -228,29 +236,45 @@ export default function TodoScreen() {
     setModalVisible(false);
   };
 
-  const confirmAdd = () => {
+  const confirmAdd = async () => {
+    if (!currentUser) return;
+
     const label = newLabel.trim();
     if (label.length === 0) {
       setModalVisible(false);
       return;
     }
-    setItems((prev) => [
-      ...prev,
-      {
+
+    try {
+      const newTodoData = {
         label,
         done: false,
         priority: newPriority,
         category: newCategory,
-      },
-    ]);
-    setModalVisible(false);
+        userId: currentUser.uid,
+      };
+
+      const todoId = await todoHelpers.addTodoItem(newTodoData);
+
+      setItems((prev) => [
+        ...prev,
+        {
+          id: todoId,
+          ...newTodoData,
+        },
+      ]);
+      setModalVisible(false);
+    } catch (error) {
+      console.error('Error adding todo item:', error);
+      Alert.alert('エラー', 'Todoの追加に失敗しました');
+    }
   };
   return (
     <View style={styles.root}>
       <Header title="TODO" />
       <View style={styles.tabRow}>
         <View style={styles.tabContainer}>
-          <Link href="/" asChild>
+          <Link href="/screens/StudyTimeScreen" asChild>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.tabButtonInactive}
@@ -564,12 +588,26 @@ export default function TodoScreen() {
               <TouchableOpacity
                 accessibilityRole="button"
                 style={[styles.modalBtn, styles.modalDanger]}
-                onPress={() => {
+                onPress={async () => {
                   if (deleteIndex === null) return;
-                  setItems((prev) =>
-                    prev.filter((_, idx) => idx !== deleteIndex)
-                  );
-                  setDeleteIndex(null);
+
+                  const itemToDelete = items[deleteIndex];
+
+                  try {
+                    // Firebaseから削除
+                    if (itemToDelete.id) {
+                      await todoHelpers.deleteTodoItem(itemToDelete.id);
+                    }
+
+                    // ローカル状態から削除
+                    setItems((prev) =>
+                      prev.filter((_, idx) => idx !== deleteIndex)
+                    );
+                    setDeleteIndex(null);
+                  } catch (error) {
+                    console.error('Error deleting todo item:', error);
+                    Alert.alert('エラー', 'Todoの削除に失敗しました');
+                  }
                 }}
               >
                 <Text style={[styles.modalBtnText, styles.modalDangerText]}>
@@ -777,7 +815,7 @@ export default function TodoScreen() {
         </View>
       </Modal>
 
-      <BottomNavigation activeTab="study" />
+      <BottomNavigation activeTab="search" />
     </View>
   );
 }
@@ -789,7 +827,7 @@ const styles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 20,
     alignItems: 'center',
     width: '100%',
     justifyContent: 'center',

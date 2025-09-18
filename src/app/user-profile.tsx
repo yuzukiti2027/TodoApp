@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -9,12 +9,16 @@ import {
   Modal,
   Alert,
   Image,
+  TextInput,
 } from 'react-native';
 import { Link, useLocalSearchParams, router } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config';
 import BottomNavigation from '../components/BottomNavigation';
 import Header from '../components/Header';
 import Card from '../components/Card';
+import { userProfileHelpers, UserProfile } from '../utils/firebaseHelpers';
 
 export default function UserProfileScreen() {
   const { userId } = useLocalSearchParams();
@@ -26,6 +30,38 @@ export default function UserProfileScreen() {
     'monthly' | 'weekly' | 'daily'
   >('daily');
   const [addFriendVisible, setAddFriendVisible] = useState(false);
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadUserProfile(user.uid);
+      } else {
+        setUserProfile(null);
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ユーザープロフィールを読み込み
+  const loadUserProfile = async (userId: string) => {
+    try {
+      setLoading(true);
+      const profile = await userProfileHelpers.getUserProfile(userId);
+      setUserProfile(profile);
+    } catch (error) {
+      console.error('Error loading user profile:', error);
+      Alert.alert('エラー', 'プロフィールの読み込みに失敗しました');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // サンプルユーザーデータ（実際のアプリではAPIから取得）
   const userData = {
@@ -370,7 +406,7 @@ export default function UserProfileScreen() {
                     key={index}
                     style={[
                       styles.yAxisLabelContainer,
-                      { top: (value / maxYAxisHours) * 200 },
+                      { bottom: (value / maxYAxisHours) * 200 + 8 },
                     ]}
                   >
                     <Text style={styles.yAxisLabel}>{value}h</Text>
@@ -384,6 +420,45 @@ export default function UserProfileScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
             >
+              {/* グリッドライン */}
+              <View style={styles.gridLines}>
+                {(() => {
+                  const maxHours = Math.max(
+                    ...Object.values(studyStats.subjectStats)
+                  );
+
+                  // 最大値に基づいて適切なステップを計算
+                  let step;
+                  if (maxHours <= 10) {
+                    step = 2;
+                  } else if (maxHours <= 50) {
+                    step = 10;
+                  } else if (maxHours <= 100) {
+                    step = 20;
+                  } else if (maxHours <= 200) {
+                    step = 50;
+                  } else {
+                    step = Math.ceil(maxHours / 5 / 50) * 50;
+                  }
+
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
+
+                  // グリッドラインを生成
+                  const gridLines = [];
+                  for (let i = 0; i <= maxYAxisHours; i += step) {
+                    gridLines.push(
+                      <View
+                        key={i}
+                        style={[
+                          styles.gridLine,
+                          { bottom: (i / maxYAxisHours) * 200 + 8 - 6 + 17 },
+                        ]}
+                      />
+                    );
+                  }
+                  return gridLines;
+                })()}
+              </View>
               <View style={styles.barGraph}>
                 {Object.entries(studyStats.subjectStats).map(
                   ([subject, hours], index) => {
@@ -412,7 +487,7 @@ export default function UserProfileScreen() {
                       <View key={subject} style={styles.barGroup}>
                         <Text style={styles.barHours}>{hours}h</Text>
                         <View
-                          style={[styles.bar, { height: Math.max(2, height) }]}
+                          style={[styles.bar, { height: Math.max(1, height) }]}
                         />
                         <Text style={styles.barLabel}>{subject}</Text>
                       </View>
@@ -436,21 +511,18 @@ export default function UserProfileScreen() {
                 const maxHours = Math.max(
                   ...dailyStats.map((d) => d.totalHours)
                 );
-                const step = maxHours / 5;
-                const values = [
-                  0,
-                  step,
-                  step * 2,
-                  step * 3,
-                  step * 4,
-                  maxHours,
-                ];
+                const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                const maxYAxisHours = Math.ceil(maxHours / step) * step;
+                const values = [];
+                for (let i = 0; i <= maxYAxisHours; i += step) {
+                  values.push(i);
+                }
                 return values.map((value, index) => (
                   <View
                     key={index}
                     style={[
                       styles.yAxisLabelContainer,
-                      { top: (value / maxHours) * 200 },
+                      { bottom: (value / maxYAxisHours) * 200 + 8 },
                     ]}
                   >
                     <Text style={styles.yAxisLabel}>{Math.round(value)}h</Text>
@@ -464,13 +536,41 @@ export default function UserProfileScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
             >
+              {/* グリッドライン */}
+              <View style={styles.gridLines}>
+                {(() => {
+                  const maxHours = Math.max(
+                    ...dailyStats.map((d) => d.totalHours)
+                  );
+                  const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
+
+                  const gridLines = [];
+                  for (let i = 0; i <= maxYAxisHours; i += step) {
+                    gridLines.push(
+                      <View
+                        key={i}
+                        style={[
+                          styles.gridLine,
+                          { bottom: (i / maxYAxisHours) * 200 + 8 - 6 + 16 },
+                        ]}
+                      />
+                    );
+                  }
+                  return gridLines;
+                })()}
+              </View>
               <View style={styles.barGraph}>
                 {dailyStats.map((day, index) => {
                   const maxHours = Math.max(
                     ...dailyStats.map((d) => d.totalHours)
                   );
+                  const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
                   const height =
-                    maxHours > 0 ? (day.totalHours / maxHours) * 200 : 0;
+                    maxYAxisHours > 0
+                      ? (day.totalHours / maxYAxisHours) * 220
+                      : 0;
                   const dateObj = new Date(day.date);
                   const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][
                     dateObj.getDay()
@@ -483,7 +583,7 @@ export default function UserProfileScreen() {
                     <View key={day.date} style={styles.barGroup}>
                       <Text style={styles.barHours}>{day.totalHours}h</Text>
                       <View
-                        style={[styles.bar, { height: Math.max(2, height) }]}
+                        style={[styles.bar, { height: Math.max(1, height) }]}
                       />
                       <Text style={styles.barLabel}>{dateLabel}</Text>
                     </View>
@@ -697,7 +797,9 @@ export default function UserProfileScreen() {
           </View>
           <View style={styles.userDetails}>
             <View style={styles.nameRow}>
-              <Text style={styles.userName}>{user.name}</Text>
+              <Text style={styles.userName}>
+                {userProfile?.displayName || user.name}
+              </Text>
               <TouchableOpacity
                 style={styles.addFriendButton}
                 onPress={handleAddFriend}
@@ -711,7 +813,7 @@ export default function UserProfileScreen() {
             </Text>
           </View>
         </View>
-        <Text style={styles.bio}>{user.bio}</Text>
+        <Text style={styles.bio}>{userProfile?.bio || user.bio}</Text>
       </View>
 
       {/* タブ切り替え */}
@@ -1011,6 +1113,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginRight: 0,
     marginBottom: 6,
+    marginTop: 30,
     height: 200,
     justifyContent: 'flex-end',
     width: 40,
@@ -1035,39 +1138,65 @@ const styles = StyleSheet.create({
   },
   barGraphArea: {
     flex: 1,
-    maxHeight: 250,
+    maxHeight: 320,
   },
   barGraph: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: 200,
+    height: 220,
     marginBottom: 0,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 5,
+    paddingTop: 30,
   },
   barGroup: {
     alignItems: 'center',
-    marginHorizontal: 0,
+    marginHorizontal: 2,
+    minWidth: 45,
   },
   bar: {
     width: 28,
     backgroundColor: '#5c6bc0',
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    shadowColor: '#5c6bc0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   barLabel: {
-    width: 54,
+    width: 45,
     textAlign: 'center',
     fontSize: 11,
     color: '#5f6368',
-    marginTop: 4,
+    marginTop: 6,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   barHours: {
     fontSize: 11,
-    color: '#5f6368',
-    marginBottom: 2,
-    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    minHeight: 14,
+  },
+  gridLines: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 200,
+    marginTop: 30,
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    opacity: 0.5,
   },
   recordsCard: {
     backgroundColor: '#fff',
@@ -1165,29 +1294,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
   },
   modalCard: {
-    backgroundColor: '#fff',
-    borderRadius: 12,
-    padding: 24,
     width: '100%',
     maxWidth: 400,
+    backgroundColor: '#fff',
+    borderRadius: 12,
+    padding: 20,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    elevation: 5,
   },
   modalTitle: {
-    fontSize: 20,
+    fontSize: 18,
     fontWeight: 'bold',
     color: '#333',
-    marginBottom: 16,
+    marginBottom: 20,
     textAlign: 'center',
-  },
-  modalText: {
-    fontSize: 16,
-    color: '#666',
-    marginBottom: 24,
-    textAlign: 'center',
-    lineHeight: 24,
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    gap: 12,
   },
   modalButton: {
     flex: 1,

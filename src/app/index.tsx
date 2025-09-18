@@ -8,13 +8,17 @@ import { auth } from '../config';
 const Index = () => {
   useEffect(() => {
     //ユーザのログイン情報を確認
-    onAuthStateChanged(auth, (user) => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user !== null) {
-        router.replace('./screens/MypageScreen');
+        router.replace('/screens/StudyTimeScreen');
+      } else {
+        router.replace('/screens/LoginScreen');
       }
     });
+
+    return () => unsubscribe();
   }, []);
-  return <Redirect href="./screens/LoginScreen" />;
+  return <Redirect href="/screens/LoginScreen" />;
 };
 
 export default Index;
