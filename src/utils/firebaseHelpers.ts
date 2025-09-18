@@ -55,6 +55,7 @@ export interface UserProfile {
   email: string;
   avatar?: string;
   bio?: string;
+  goals?: string[]; // ユーザーの目標リスト
   createdAt?: any;
   updatedAt?: any;
 }
@@ -424,6 +425,76 @@ export const notificationHelpers = {
       );
     } catch (error) {
       console.error('Error getting user notifications:', error);
+      throw error;
+    }
+  },
+
+  // 目標が似ているユーザーを検索
+  async findUsersWithSimilarGoals(
+    currentUserId: string,
+    userGoals: string[]
+  ): Promise<UserProfile[]> {
+    try {
+      if (!userGoals || userGoals.length === 0) {
+        return [];
+      }
+
+      const q = query(collection(db, 'userProfiles'));
+      const querySnapshot = await getDocs(q);
+
+      const usersWithSimilarGoals: UserProfile[] = [];
+
+      querySnapshot.docs.forEach((doc) => {
+        const userData = doc.data() as UserProfile;
+
+        // 自分以外のユーザーのみ対象
+        if (userData.userId === currentUserId) return;
+
+        // 目標が設定されているユーザーのみ対象
+        if (!userData.goals || userData.goals.length === 0) return;
+
+        // 共通する目標の数を計算
+        const commonGoals = userData.goals.filter((goal) =>
+          userGoals.some(
+            (userGoal) =>
+              userGoal.toLowerCase().includes(goal.toLowerCase()) ||
+              goal.toLowerCase().includes(userGoal.toLowerCase())
+          )
+        );
+
+        // 共通する目標が1つ以上あるユーザーを追加
+        if (commonGoals.length > 0) {
+          usersWithSimilarGoals.push({
+            id: doc.id,
+            ...userData,
+          });
+        }
+      });
+
+      // 共通する目標の数でソート（多い順）
+      return usersWithSimilarGoals.sort((a, b) => {
+        const aCommon =
+          a.goals?.filter((goal) =>
+            userGoals.some(
+              (userGoal) =>
+                userGoal.toLowerCase().includes(goal.toLowerCase()) ||
+                goal.toLowerCase().includes(userGoal.toLowerCase())
+            )
+          ).length || 0;
+
+        const bCommon =
+          b.goals?.filter((goal) =>
+            userGoals.some(
+              (userGoal) =>
+                userGoal.toLowerCase().includes(goal.toLowerCase()) ||
+                goal.toLowerCase().includes(userGoal.toLowerCase())
+            )
+          ).length || 0;
+
+        return bCommon - aCommon;
+      });
+    } catch (error) {
+      console.error('Error finding users with similar goals:', error);
       throw error;
     }
   },

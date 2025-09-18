@@ -1,7 +1,8 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import { Link } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import BannerAd from './BannerAd';
 
 interface BottomNavigationProps {
   activeTab: 'study' | 'search' | 'friends' | 'profile';
@@ -9,11 +10,14 @@ interface BottomNavigationProps {
 
 export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
   const isActive = (tab: string) => activeTab === tab;
+  const [showBannerAd, setShowBannerAd] = useState(true);
 
   return (
     <View style={styles.bottomArea}>
+      {/* バナー広告 */}
+      {showBannerAd && <BannerAd onClose={() => setShowBannerAd(false)} />}
       <View style={styles.bottomContainer}>
-        <Link href="/" asChild>
+        <Link href="/screens/StudyTimeScreen" asChild>
           <TouchableOpacity
             style={[
               styles.bottomItem,
@@ -106,34 +110,36 @@ export default function BottomNavigation({ activeTab }: BottomNavigationProps) {
           </TouchableOpacity>
         </Link>
 
-        <TouchableOpacity
-          style={[
-            styles.bottomItem,
-            isActive('profile') && styles.bottomItemActive,
-          ]}
-        >
-          <View
+        <Link href="/mypage" asChild>
+          <TouchableOpacity
             style={[
-              styles.bottomIconContainer,
-              isActive('profile') && styles.bottomIconContainerActive,
+              styles.bottomItem,
+              isActive('profile') && styles.bottomItemActive,
             ]}
           >
-            <MaterialIcons
-              name="person-outline"
-              size={24}
-              color={isActive('profile') ? '#fff' : '#666'}
-            />
-          </View>
-          <Text
-            style={
-              isActive('profile')
-                ? styles.bottomLabel
-                : styles.bottomLabelSecondary
-            }
-          >
-            マイページ
-          </Text>
-        </TouchableOpacity>
+            <View
+              style={[
+                styles.bottomIconContainer,
+                isActive('profile') && styles.bottomIconContainerActive,
+              ]}
+            >
+              <MaterialIcons
+                name="person-outline"
+                size={24}
+                color={isActive('profile') ? '#fff' : '#666'}
+              />
+            </View>
+            <Text
+              style={
+                isActive('profile')
+                  ? styles.bottomLabel
+                  : styles.bottomLabelSecondary
+              }
+            >
+              マイページ
+            </Text>
+          </TouchableOpacity>
+        </Link>
       </View>
     </View>
   );
@@ -150,9 +156,9 @@ const styles = StyleSheet.create({
     borderTopRightRadius: 16,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
-    shadowOpacity: 0.25,
+    shadowOpacity: 0.15,
     shadowRadius: 16,
-    elevation: 12,
+    elevation: 10,
     paddingBottom: 8,
     zIndex: 1000,
   },
@@ -161,16 +167,16 @@ const styles = StyleSheet.create({
     justifyContent: 'space-evenly',
     alignItems: 'center',
     paddingTop: 8,
-    paddingBottom: 6,
+    paddingBottom: 12,
     width: '100%',
   },
   bottomItem: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 0,
-    paddingHorizontal: 0,
+    paddingHorizontal: 8,
     borderRadius: 8,
-    minWidth: 60,
+    flex: 1,
   },
   bottomIconContainer: {
     width: 36,
@@ -180,6 +186,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: 4,
+    alignSelf: 'center',
   },
   bottomLabel: {
     fontSize: 12,

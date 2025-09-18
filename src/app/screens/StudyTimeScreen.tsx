@@ -128,7 +128,6 @@ export default function MyPageScreen() {
 
       setSubjectsData(updatedSubjectsData);
     } catch (error) {
-      console.error('Error loading user study times:', error);
       Alert.alert('エラー', '勉強時間データの読み込みに失敗しました');
     } finally {
       setLoading(false);
@@ -211,7 +210,6 @@ export default function MyPageScreen() {
 
       Alert.alert('成功', '勉強時間を追加しました');
     } catch (error) {
-      console.error('Error adding study time:', error);
       Alert.alert('エラー', '勉強時間の追加に失敗しました');
     }
   };
@@ -237,14 +235,6 @@ export default function MyPageScreen() {
       const steps = Math.ceil((maxTotalHours - 200) / 50);
       max = 200 + steps * 50;
     }
-    console.log(
-      'maxYAxisHours calculated:',
-      max,
-      'maxTotalHours:',
-      maxTotalHours,
-      'from subjectsData:',
-      subjectsData
-    );
     return max;
   }, [subjectsData]);
 
@@ -385,11 +375,6 @@ export default function MyPageScreen() {
     return max;
   }, [dailyData]);
 
-  // データ変更を監視
-  useEffect(() => {
-    console.log('subjectsData changed:', subjectsData);
-  }, [subjectsData]);
-
   // Y軸のラベルとグリッドラインを生成
   const generateYAxisLabels = () => {
     const labels = [];
@@ -509,27 +494,16 @@ export default function MyPageScreen() {
     // 日付を構築
     const dateString = `${addYear}-${addMonth}-${addDay}`;
 
-    console.log('Adding time:', {
-      label,
-      hours,
-      dateString,
-      addMode,
-      selectedSubjectIndex,
-    });
-
     // バリデーション
     if (addMode === 'existing' && selectedSubjectIndex === null) {
-      console.log('既存科目が選択されていません');
       setAddVisible(false);
       return;
     }
     if (addMode === 'new' && !label) {
-      console.log('新規科目の名前が入力されていません');
       setAddVisible(false);
       return;
     }
     if (isNaN(hours) || hours < 0) {
-      console.log('無効な時間です:', hours);
       setAddVisible(false);
       return;
     }
@@ -562,7 +536,6 @@ export default function MyPageScreen() {
           });
         }
 
-        console.log('Updated existing subject:', next[selectedSubjectIndex]);
         return next;
       });
     } else {
@@ -596,7 +569,6 @@ export default function MyPageScreen() {
             });
           }
 
-          console.log('Updated existing subject by name:', next[idx]);
           return next;
         }
         // 新規科目を作成
@@ -613,7 +585,6 @@ export default function MyPageScreen() {
             ],
           },
         ];
-        console.log('Created new subject:', newData[newData.length - 1]);
         return newData;
       });
     }
@@ -786,9 +757,6 @@ export default function MyPageScreen() {
                         totalHours > 0
                           ? Math.max(2, (totalHours / maxYAxisHours) * 240)
                           : 0;
-                      console.log(
-                        `Graph rendering - ${item.label}: totalHours=${totalHours}, height=${height}, maxYAxisHours=${maxYAxisHours}`
-                      );
                       return (
                         <View key={i} style={styles.barGroup}>
                           <Text style={styles.barHours}>{totalHours}h</Text>
@@ -846,14 +814,6 @@ export default function MyPageScreen() {
             </View>
           </ScrollView>
         </View>
-      </View>
-
-      {/* 時間の追加ボタン */}
-      <View style={styles.addButtonContainer}>
-        <TouchableOpacity style={styles.addButton} onPress={openAdd}>
-          <MaterialIcons name="add-circle-outline" size={20} color="#fff" />
-          <Text style={styles.addButtonText}>時間の追加</Text>
-        </TouchableOpacity>
       </View>
 
       {/* 追加モーダル */}
@@ -1275,13 +1235,13 @@ export default function MyPageScreen() {
         </KeyboardAvoidingView>
       </Modal>
 
-      {/* 勉強時間追加ボタン */}
-      <TouchableOpacity
-        style={styles.addStudyTimeButton}
-        onPress={() => setAddStudyTimeModalVisible(true)}
-      >
-        <Text style={styles.addStudyTimeButtonText}>+</Text>
-      </TouchableOpacity>
+      {/* 時間の追加ボタン */}
+      <View style={styles.addButtonContainer}>
+        <TouchableOpacity style={styles.addButton} onPress={openAdd}>
+          <MaterialIcons name="add-circle-outline" size={20} color="#fff" />
+          <Text style={styles.addButtonText}>時間の追加</Text>
+        </TouchableOpacity>
+      </View>
 
       <BottomNavigation activeTab="study" />
     </View>
@@ -1320,7 +1280,7 @@ const styles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 20,
     alignItems: 'center',
     width: '100%',
     justifyContent: 'center',
@@ -1705,29 +1665,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
   },
-  // 勉強時間追加ボタンのスタイル
-  addStudyTimeButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#ff6b35',
+  addButtonContainer: {
+    alignItems: 'center',
+    paddingVertical: 20,
+    paddingHorizontal: 20,
+    backgroundColor: '#fff',
+    marginBottom: 140,
+    position: 'relative',
+    zIndex: 10,
+  },
+  addButton: {
+    backgroundColor: '#5c6bc0',
+    paddingVertical: 12,
+    paddingHorizontal: 24,
+    borderRadius: 25,
+    width: 200,
+    height: 48,
     justifyContent: 'center',
     alignItems: 'center',
-    elevation: 8,
+    zIndex: 11,
+    elevation: 3,
     shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 3,
+    flexDirection: 'row',
+    gap: 6,
   },
-  addStudyTimeButtonText: {
-    fontSize: 24,
+  addButtonText: {
     color: '#fff',
+    fontSize: 16,
     fontWeight: 'bold',
   },
   // 日別詳細モーダルのスタイル
@@ -1772,38 +1739,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     color: '#999',
     marginTop: 16,
-  },
-  addButtonContainer: {
-    alignItems: 'center',
-    paddingVertical: 20,
-    paddingHorizontal: 20,
-    backgroundColor: '#fff',
-    marginBottom: 140,
-    position: 'relative',
-    zIndex: 10,
-  },
-  addButton: {
-    backgroundColor: '#5c6bc0',
-    paddingVertical: 12,
-    paddingHorizontal: 24,
-    borderRadius: 25,
-    width: 200,
-    height: 48,
-    justifyContent: 'center',
-    alignItems: 'center',
-    zIndex: 11,
-    elevation: 3,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.2,
-    shadowRadius: 3,
-    flexDirection: 'row',
-    gap: 6,
-  },
-  addButtonText: {
-    color: '#fff',
-    fontSize: 16,
-    fontWeight: 'bold',
   },
   totalHoursContainer: {
     alignItems: 'center',

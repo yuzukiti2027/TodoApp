@@ -11,7 +11,6 @@ import {
 import { useState } from 'react';
 import { Link, router } from 'expo-router';
 import { MaterialIcons } from '@expo/vector-icons';
-import { FontAwesome6 } from '@expo/vector-icons';
 
 import { createUserWithEmailAndPassword } from 'firebase/auth'; //登録するやつ
 import { auth } from '../../config'; //登録するやつ
@@ -46,32 +45,36 @@ const Signin = () => {
           <Text style={styles.titleText}>新規登録</Text>
         </View>
         <View style={styles.inputFlame}>
-          <MaterialIcons name="account-circle" size={40} style={styles.image} />
+          <MaterialIcons name="account-circle" size={24} style={styles.image} />
           <TextInput
             value={email}
             onChangeText={setEmail}
             style={styles.input}
-            placeholder="Username"
+            placeholder="ユーザーネーム"
+            placeholderTextColor="#999"
             autoCapitalize="none"
             keyboardType="email-address"
             textContentType="emailAddress"
           />
         </View>
         <View style={styles.inputFlame}>
-          <FontAwesome6 name="key" size={30} style={styles.image} />
+          <MaterialIcons name="lock" size={24} style={styles.image} />
           <TextInput
             value={password}
             onChangeText={setPassword}
             style={styles.input}
-            placeholder="Password"
+            placeholder="パスワード"
+            placeholderTextColor="#999"
             secureTextEntry // パスワード入力用に追記するとより良い(隠すやつ)
             autoCapitalize="none"
             textContentType="password"
           />
         </View>
         <Button
-          label="新規登録"
+          title="新規登録"
           onPress={() => handleSignInPress(email, password)}
+          size="medium"
+          style={{ width: '30%', marginTop: 8 }}
         />
         {/* onPressの中には、関数というよりもこれを実行するっていうのを置いてるだけなので、引数を渡せない */}
         <View style={styles.ToLogIn}>
@@ -91,83 +94,63 @@ const Signin = () => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'space-between', //先頭の要素を上端に、最後の要素を下端に配置、真ん中の要素はその間に配置
-    backgroundColor: 'white',
+    backgroundColor: '#f8f9fb',
   },
   content: {
     flex: 1,
-    gap: 32, // 要素間のスペースを設定
+    paddingHorizontal: 32,
+    paddingTop: 80,
     alignItems: 'center',
-    justifyContent: 'flex-start',
   },
   titleFlame: {
-    marginTop: 56,
+    marginBottom: 48,
+    alignItems: 'center',
   },
   titleText: {
-    fontSize: 40,
+    fontSize: 32,
+    fontWeight: 'bold',
     textAlign: 'center',
-    color: '#8b8b8bff',
+    color: '#333',
+    marginBottom: 8,
   },
   inputFlame: {
-    height: 56,
-    width: '80%',
+    width: '100%',
+    marginBottom: 20,
+    backgroundColor: '#fff',
+    borderRadius: 12,
     flexDirection: 'row',
-    borderColor: 'gray',
-    borderWidth: 1,
-    borderRadius: 8, //角を丸くする
+    alignItems: 'center',
+    paddingHorizontal: 16,
+    paddingVertical: 16,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   image: {
-    // borderColor: 'gray',
-    // borderWidth: 1,
-    marginTop: 8,
-    marginLeft: 8,
+    width: 24,
+    height: 24,
+    marginRight: 12,
+    color: '#666',
   },
   input: {
-    // borderColor: 'gray',
-    // borderWidth: 1,
-    width: '72%',
-    height: 56,
-    paddingHorizontal: 8, //左右のpadding
-    fontSize: 20,
-  },
-  text: {
-    color: 'white',
-    backgroundColor: 'blue',
-    fontSize: 40,
-    fontWeight: 'bold',
-    padding: 16,
-  },
-  button: {
-    width: '30%',
-    height: 45,
-    borderRadius: 8,
-    backgroundColor: 'orange',
-    justifyContent: 'center',
-    textAlign: 'right',
-    position: 'relative',
-    bottom: 0, // フッターの上に配置
-    left: 95, // 中央に配置
-  },
-  buttonLabel: {
-    textAlign: 'center',
-    color: '#0000FF',
-    fontSize: 20,
-    fontWeight: 'bold',
-  },
-  debug: {
-    // デバッグ用のスタイル
-    borderWidth: 2,
-    borderColor: 'red',
+    flex: 1,
+    fontSize: 16,
+    color: '#333',
+    paddingVertical: 4,
   },
   ToLogIn: {
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    marginTop: 24,
   },
   LogInLink: {
-    color: 'blue',
-    textDecorationLine: 'underline', // 下線を引く
+    color: '#5c6bc0',
+    fontWeight: '600',
+    fontSize: 16,
   },
 });
 

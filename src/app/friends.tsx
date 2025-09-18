@@ -330,14 +330,6 @@ export default function FriendsScreen() {
         ))}
       </ScrollView>
 
-      {/* 友達追加ボタン */}
-      <TouchableOpacity
-        style={styles.addFriendButton}
-        onPress={() => setAddFriendModalVisible(true)}
-      >
-        <MaterialIcons name="person-add" size={24} color="#fff" />
-      </TouchableOpacity>
-
       {/* 友達追加モーダル */}
       <Modal
         visible={addFriendModalVisible}
@@ -487,26 +479,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     fontWeight: '500',
-  },
-  // 友達追加ボタンのスタイル
-  addFriendButton: {
-    position: 'absolute',
-    bottom: 100,
-    right: 20,
-    width: 60,
-    height: 60,
-    borderRadius: 30,
-    backgroundColor: '#5c6bc0',
-    justifyContent: 'center',
-    alignItems: 'center',
-    elevation: 8,
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 4,
-    },
-    shadowOpacity: 0.3,
-    shadowRadius: 4.65,
   },
   // モーダルのスタイル
   modalOverlay: {

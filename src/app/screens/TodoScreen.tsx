@@ -12,7 +12,7 @@ import {
   Modal,
   Alert,
 } from 'react-native';
-import { Link } from 'expo-router';
+import { Link, router } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
 import { onAuthStateChanged } from 'firebase/auth';
 import { auth } from '../../config';
@@ -274,7 +274,7 @@ export default function TodoScreen() {
       <Header title="TODO" />
       <View style={styles.tabRow}>
         <View style={styles.tabContainer}>
-          <Link href="/" asChild>
+          <Link href="/screens/StudyTimeScreen" asChild>
             <TouchableOpacity
               accessibilityRole="button"
               style={styles.tabButtonInactive}
@@ -815,7 +815,7 @@ export default function TodoScreen() {
         </View>
       </Modal>
 
-      <BottomNavigation activeTab="study" />
+      <BottomNavigation activeTab="search" />
     </View>
   );
 }
@@ -827,7 +827,7 @@ const styles = StyleSheet.create({
   },
   tabRow: {
     flexDirection: 'row',
-    marginTop: 12,
+    marginTop: 20,
     alignItems: 'center',
     width: '100%',
     justifyContent: 'center',

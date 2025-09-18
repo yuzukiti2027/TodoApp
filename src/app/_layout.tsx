@@ -6,16 +6,7 @@ const Layout = () => {
     <SafeAreaProvider>
       <Stack
         screenOptions={{
-          headerStyle: {
-            backgroundColor: 'orange',
-          },
-          headerTintColor: 'white',
-          headerTitle: 'Todo App',
-          headerBackTitle: 'Back',
-          headerTitleStyle: {
-            fontSize: 22,
-            fontWeight: 'bold',
-          },
+          headerShown: false,
         }}
       />
     </SafeAreaProvider>

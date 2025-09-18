@@ -33,11 +33,6 @@ export default function UserProfileScreen() {
   const [currentUser, setCurrentUser] = useState<any>(null);
   const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
-  const [editProfileVisible, setEditProfileVisible] = useState(false);
-  const [editForm, setEditForm] = useState({
-    displayName: '',
-    bio: '',
-  });
 
   // ユーザー認証状態を監視
   useEffect(() => {
@@ -60,53 +55,11 @@ export default function UserProfileScreen() {
       setLoading(true);
       const profile = await userProfileHelpers.getUserProfile(userId);
       setUserProfile(profile);
-
-      if (profile) {
-        setEditForm({
-          displayName: profile.displayName,
-          bio: profile.bio || '',
-        });
-      } else {
-        // プロフィールが存在しない場合はデフォルト値で初期化
-        setEditForm({
-          displayName: currentUser?.displayName || '',
-          bio: '',
-        });
-      }
     } catch (error) {
       console.error('Error loading user profile:', error);
       Alert.alert('エラー', 'プロフィールの読み込みに失敗しました');
     } finally {
       setLoading(false);
-    }
-  };
-
-  // プロフィールを更新
-  const updateProfile = async () => {
-    if (!currentUser) return;
-
-    try {
-      const profileData = {
-        userId: currentUser.uid,
-        displayName: editForm.displayName.trim(),
-        email: currentUser.email || '',
-        bio: editForm.bio.trim(),
-      };
-
-      await userProfileHelpers.upsertUserProfile(profileData);
-
-      setUserProfile({
-        id: '',
-        ...profileData,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      });
-
-      setEditProfileVisible(false);
-      Alert.alert('成功', 'プロフィールを更新しました');
-    } catch (error) {
-      console.error('Error updating profile:', error);
-      Alert.alert('エラー', 'プロフィールの更新に失敗しました');
     }
   };
 
@@ -453,7 +406,7 @@ export default function UserProfileScreen() {
                     key={index}
                     style={[
                       styles.yAxisLabelContainer,
-                      { top: (value / maxYAxisHours) * 200 },
+                      { bottom: (value / maxYAxisHours) * 200 + 8 },
                     ]}
                   >
                     <Text style={styles.yAxisLabel}>{value}h</Text>
@@ -467,6 +420,45 @@ export default function UserProfileScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
             >
+              {/* グリッドライン */}
+              <View style={styles.gridLines}>
+                {(() => {
+                  const maxHours = Math.max(
+                    ...Object.values(studyStats.subjectStats)
+                  );
+
+                  // 最大値に基づいて適切なステップを計算
+                  let step;
+                  if (maxHours <= 10) {
+                    step = 2;
+                  } else if (maxHours <= 50) {
+                    step = 10;
+                  } else if (maxHours <= 100) {
+                    step = 20;
+                  } else if (maxHours <= 200) {
+                    step = 50;
+                  } else {
+                    step = Math.ceil(maxHours / 5 / 50) * 50;
+                  }
+
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
+
+                  // グリッドラインを生成
+                  const gridLines = [];
+                  for (let i = 0; i <= maxYAxisHours; i += step) {
+                    gridLines.push(
+                      <View
+                        key={i}
+                        style={[
+                          styles.gridLine,
+                          { bottom: (i / maxYAxisHours) * 200 + 8 - 6 + 17 },
+                        ]}
+                      />
+                    );
+                  }
+                  return gridLines;
+                })()}
+              </View>
               <View style={styles.barGraph}>
                 {Object.entries(studyStats.subjectStats).map(
                   ([subject, hours], index) => {
@@ -495,7 +487,7 @@ export default function UserProfileScreen() {
                       <View key={subject} style={styles.barGroup}>
                         <Text style={styles.barHours}>{hours}h</Text>
                         <View
-                          style={[styles.bar, { height: Math.max(2, height) }]}
+                          style={[styles.bar, { height: Math.max(1, height) }]}
                         />
                         <Text style={styles.barLabel}>{subject}</Text>
                       </View>
@@ -519,21 +511,18 @@ export default function UserProfileScreen() {
                 const maxHours = Math.max(
                   ...dailyStats.map((d) => d.totalHours)
                 );
-                const step = maxHours / 5;
-                const values = [
-                  0,
-                  step,
-                  step * 2,
-                  step * 3,
-                  step * 4,
-                  maxHours,
-                ];
+                const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                const maxYAxisHours = Math.ceil(maxHours / step) * step;
+                const values = [];
+                for (let i = 0; i <= maxYAxisHours; i += step) {
+                  values.push(i);
+                }
                 return values.map((value, index) => (
                   <View
                     key={index}
                     style={[
                       styles.yAxisLabelContainer,
-                      { top: (value / maxHours) * 200 },
+                      { bottom: (value / maxYAxisHours) * 200 + 8 },
                     ]}
                   >
                     <Text style={styles.yAxisLabel}>{Math.round(value)}h</Text>
@@ -547,13 +536,41 @@ export default function UserProfileScreen() {
               horizontal
               showsHorizontalScrollIndicator={false}
             >
+              {/* グリッドライン */}
+              <View style={styles.gridLines}>
+                {(() => {
+                  const maxHours = Math.max(
+                    ...dailyStats.map((d) => d.totalHours)
+                  );
+                  const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
+
+                  const gridLines = [];
+                  for (let i = 0; i <= maxYAxisHours; i += step) {
+                    gridLines.push(
+                      <View
+                        key={i}
+                        style={[
+                          styles.gridLine,
+                          { bottom: (i / maxYAxisHours) * 200 + 8 - 6 + 16 },
+                        ]}
+                      />
+                    );
+                  }
+                  return gridLines;
+                })()}
+              </View>
               <View style={styles.barGraph}>
                 {dailyStats.map((day, index) => {
                   const maxHours = Math.max(
                     ...dailyStats.map((d) => d.totalHours)
                   );
+                  const step = maxHours <= 10 ? 2 : maxHours <= 50 ? 10 : 20;
+                  const maxYAxisHours = Math.ceil(maxHours / step) * step;
                   const height =
-                    maxHours > 0 ? (day.totalHours / maxHours) * 200 : 0;
+                    maxYAxisHours > 0
+                      ? (day.totalHours / maxYAxisHours) * 220
+                      : 0;
                   const dateObj = new Date(day.date);
                   const dayOfWeek = ['日', '月', '火', '水', '木', '金', '土'][
                     dateObj.getDay()
@@ -566,7 +583,7 @@ export default function UserProfileScreen() {
                     <View key={day.date} style={styles.barGroup}>
                       <Text style={styles.barHours}>{day.totalHours}h</Text>
                       <View
-                        style={[styles.bar, { height: Math.max(2, height) }]}
+                        style={[styles.bar, { height: Math.max(1, height) }]}
                       />
                       <Text style={styles.barLabel}>{dateLabel}</Text>
                     </View>
@@ -783,20 +800,12 @@ export default function UserProfileScreen() {
               <Text style={styles.userName}>
                 {userProfile?.displayName || user.name}
               </Text>
-              <View style={styles.buttonRow}>
-                <TouchableOpacity
-                  style={styles.editProfileButton}
-                  onPress={() => setEditProfileVisible(true)}
-                >
-                  <MaterialIcons name="edit" size={20} color="#5c6bc0" />
-                </TouchableOpacity>
-                <TouchableOpacity
-                  style={styles.addFriendButton}
-                  onPress={handleAddFriend}
-                >
-                  <MaterialIcons name="person-add" size={20} color="#5c6bc0" />
-                </TouchableOpacity>
-              </View>
+              <TouchableOpacity
+                style={styles.addFriendButton}
+                onPress={handleAddFriend}
+              >
+                <MaterialIcons name="person-add" size={20} color="#5c6bc0" />
+              </TouchableOpacity>
             </View>
             <Text style={styles.username}>{user.username}</Text>
             <Text style={styles.lastActive}>
@@ -882,55 +891,6 @@ export default function UserProfileScreen() {
           </View>
         </View>
       </Modal>
-
-      {/* プロフィール編集モーダル */}
-      <Modal
-        visible={editProfileVisible}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setEditProfileVisible(false)}
-      >
-        <View style={styles.modalOverlay}>
-          <View style={styles.modalCard}>
-            <Text style={styles.modalTitle}>プロフィールを編集</Text>
-
-            <TextInput
-              style={styles.modalInput}
-              placeholder="表示名"
-              value={editForm.displayName}
-              onChangeText={(text) =>
-                setEditForm((prev) => ({ ...prev, displayName: text }))
-              }
-            />
-
-            <TextInput
-              style={[styles.modalInput, styles.bioInput]}
-              placeholder="自己紹介"
-              value={editForm.bio}
-              onChangeText={(text) =>
-                setEditForm((prev) => ({ ...prev, bio: text }))
-              }
-              multiline
-              numberOfLines={4}
-            />
-
-            <View style={styles.modalButtons}>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalCancel]}
-                onPress={() => setEditProfileVisible(false)}
-              >
-                <Text style={styles.modalBtnText}>キャンセル</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.modalBtn, styles.modalConfirm]}
-                onPress={updateProfile}
-              >
-                <Text style={styles.modalBtnText}>保存</Text>
-              </TouchableOpacity>
-            </View>
-          </View>
-        </View>
-      </Modal>
     </View>
   );
 }
@@ -944,16 +904,6 @@ const styles = StyleSheet.create({
     padding: 8,
     borderRadius: 20,
     backgroundColor: '#f0f0f0',
-  },
-  editProfileButton: {
-    padding: 8,
-    borderRadius: 20,
-    backgroundColor: '#f0f0f0',
-    marginRight: 8,
-  },
-  buttonRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
   },
   nameRow: {
     flexDirection: 'row',
@@ -1163,6 +1113,7 @@ const styles = StyleSheet.create({
     alignItems: 'flex-end',
     marginRight: 0,
     marginBottom: 6,
+    marginTop: 30,
     height: 200,
     justifyContent: 'flex-end',
     width: 40,
@@ -1187,39 +1138,65 @@ const styles = StyleSheet.create({
   },
   barGraphArea: {
     flex: 1,
-    maxHeight: 250,
+    maxHeight: 320,
   },
   barGraph: {
     flexDirection: 'row',
     alignItems: 'flex-end',
-    height: 200,
+    height: 220,
     marginBottom: 0,
-    justifyContent: 'center',
+    justifyContent: 'flex-start',
+    paddingHorizontal: 5,
+    paddingTop: 30,
   },
   barGroup: {
     alignItems: 'center',
-    marginHorizontal: 0,
+    marginHorizontal: 2,
+    minWidth: 45,
   },
   bar: {
     width: 28,
     backgroundColor: '#5c6bc0',
-    borderTopLeftRadius: 3,
-    borderTopRightRadius: 3,
+    borderTopLeftRadius: 4,
+    borderTopRightRadius: 4,
+    shadowColor: '#5c6bc0',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3,
+    elevation: 3,
   },
   barLabel: {
-    width: 54,
+    width: 45,
     textAlign: 'center',
     fontSize: 11,
     color: '#5f6368',
-    marginTop: 4,
+    marginTop: 6,
     fontWeight: '600',
-    letterSpacing: 0.2,
+    letterSpacing: 0.1,
   },
   barHours: {
     fontSize: 11,
-    color: '#5f6368',
-    marginBottom: 2,
-    fontWeight: '600',
+    color: '#333',
+    marginBottom: 6,
+    fontWeight: 'bold',
+    textAlign: 'center',
+    minHeight: 14,
+  },
+  gridLines: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    bottom: 0,
+    height: 200,
+    marginTop: 30,
+  },
+  gridLine: {
+    position: 'absolute',
+    left: 0,
+    right: 0,
+    height: 1,
+    backgroundColor: '#e0e0e0',
+    opacity: 0.5,
   },
   recordsCard: {
     backgroundColor: '#fff',
@@ -1334,41 +1311,6 @@ const styles = StyleSheet.create({
     color: '#333',
     marginBottom: 20,
     textAlign: 'center',
-  },
-  modalInput: {
-    borderWidth: 1,
-    borderColor: '#e0e0e0',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    marginBottom: 16,
-    backgroundColor: '#fafafa',
-  },
-  bioInput: {
-    height: 80,
-    textAlignVertical: 'top',
-  },
-  modalButtons: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    gap: 12,
-  },
-  modalBtn: {
-    flex: 1,
-    paddingVertical: 12,
-    borderRadius: 8,
-    alignItems: 'center',
-  },
-  modalCancel: {
-    backgroundColor: '#f0f0f0',
-  },
-  modalConfirm: {
-    backgroundColor: '#5c6bc0',
-  },
-  modalBtnText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: '#333',
   },
   modalButton: {
     flex: 1,

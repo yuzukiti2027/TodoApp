@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import {
   View,
   Text,
@@ -12,15 +12,21 @@ import {
 } from 'react-native';
 import { Link, router } from 'expo-router';
 import { MaterialIcons, Ionicons } from '@expo/vector-icons';
+import { onAuthStateChanged } from 'firebase/auth';
+import { auth } from '../config';
 import BottomNavigation from '../components/BottomNavigation';
 import Header from '../components/Header';
 import Card from '../components/Card';
+import { userProfileHelpers, UserProfile } from '../utils/firebaseHelpers';
 
 export default function SearchScreen() {
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilter, setSelectedFilter] = useState<
-    'all' | 'students' | 'teachers'
-  >('all');
+  const [selectedFilter, setSelectedFilter] = useState<'all' | 'recommended'>(
+    'all'
+  );
+  const [currentUser, setCurrentUser] = useState<any>(null);
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [recommendedUsers, setRecommendedUsers] = useState<UserProfile[]>([]);
 
   // サンプルユーザーデータ
   const sampleUsers = [
@@ -31,6 +37,7 @@ export default function SearchScreen() {
       avatar: null,
       studyHours: 45,
       subjects: ['数学', '物理', '化学'],
+      goals: ['東京大学合格', '数学偏差値70達成', '物理コンテスト入賞'],
       isOnline: true,
       lastActive: '2分前',
       bio: '理系大学を目指している高校3年生です。数学と物理が得意です。',
@@ -43,6 +50,7 @@ export default function SearchScreen() {
       avatar: null,
       studyHours: 38,
       subjects: ['国語', '英語', '社会'],
+      goals: ['TOEIC800点取得', '早稲田大学合格', '英検準1級取得'],
       isOnline: false,
       lastActive: '1時間前',
       bio: '文系志望の高校2年生。読書と英語学習が趣味です。',
@@ -55,6 +63,7 @@ export default function SearchScreen() {
       avatar: null,
       studyHours: 52,
       subjects: ['数学', '英語', '理科'],
+      goals: ['医学部合格', '共通テスト90%', '英語力向上'],
       isOnline: true,
       lastActive: '今',
       bio: '医学部志望。勉強仲間を探しています！',
@@ -67,6 +76,7 @@ export default function SearchScreen() {
       avatar: null,
       studyHours: 29,
       subjects: ['国語', '英語', '美術'],
+      goals: ['美術大学合格', 'デッサン力向上', 'TOEIC600点'],
       isOnline: false,
       lastActive: '3時間前',
       bio: '芸術系大学を目指しています。デッサンと英語が好きです。',
@@ -79,6 +89,7 @@ export default function SearchScreen() {
       avatar: null,
       studyHours: 67,
       subjects: ['数学', '物理', '化学', '英語'],
+      goals: ['東京大学理科一類合格', '共通テスト満点', '数学オリンピック'],
       isOnline: true,
       lastActive: '5分前',
       bio: '東大志望の浪人生。一緒に頑張りましょう！',
@@ -86,8 +97,56 @@ export default function SearchScreen() {
     },
   ];
 
+  // ユーザー認証状態を監視
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      setCurrentUser(user);
+      if (user) {
+        loadUserProfileAndRecommendations(user.uid);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // ユーザープロフィールとおすすめユーザーを読み込み
+  const loadUserProfileAndRecommendations = async (userId: string) => {
+    try {
+      const profile = await userProfileHelpers.getUserProfile(userId);
+      setUserProfile(profile);
+
+      if (profile && profile.goals && profile.goals.length > 0) {
+        const recommended = await userProfileHelpers.findUsersWithSimilarGoals(
+          userId,
+          profile.goals
+        );
+        setRecommendedUsers(recommended);
+      }
+    } catch (error) {
+      console.error('Error loading profile and recommendations:', error);
+    }
+  };
+
   // 検索とフィルタリング
   const filteredUsers = useMemo(() => {
+    // おすすめユーザーを表示する場合
+    if (selectedFilter === 'recommended') {
+      return recommendedUsers.map((user) => ({
+        id: user.userId,
+        name: user.displayName,
+        username: `@${user.displayName.toLowerCase().replace(/\s+/g, '_')}`,
+        avatar: user.avatar,
+        studyHours: Math.floor(Math.random() * 60) + 20, // サンプル値
+        subjects: user.goals || [],
+        isOnline: Math.random() > 0.5,
+        lastActive:
+          Math.random() > 0.7 ? '今' : `${Math.floor(Math.random() * 60)}分前`,
+        bio: user.bio || '目標に向かって頑張っています！',
+        mutualFriends: Math.floor(Math.random() * 5),
+        goals: user.goals,
+      }));
+    }
+
     let filtered = sampleUsers;
 
     // 検索クエリでフィルタリング
@@ -98,19 +157,18 @@ export default function SearchScreen() {
           user.name.toLowerCase().includes(query) ||
           user.username.toLowerCase().includes(query) ||
           user.bio.toLowerCase().includes(query) ||
-          user.subjects.some((subject) => subject.toLowerCase().includes(query))
+          user.subjects.some((subject) =>
+            subject.toLowerCase().includes(query)
+          ) ||
+          (user.goals &&
+            user.goals.some((goal) => goal.toLowerCase().includes(query)))
       );
     }
 
-    // カテゴリでフィルタリング
-    if (selectedFilter === 'students') {
-      filtered = filtered.filter((user) => user.studyHours < 50);
-    } else if (selectedFilter === 'teachers') {
-      filtered = filtered.filter((user) => user.studyHours >= 50);
-    }
+    // カテゴリでフィルタリング（学生・講師の分別は削除）
 
     return filtered;
-  }, [searchQuery, selectedFilter]);
+  }, [searchQuery, selectedFilter, recommendedUsers]);
 
   const handleUserPress = (user: any) => {
     router.push(`/user-profile?userId=${user.id}`);
@@ -192,6 +250,29 @@ export default function SearchScreen() {
         )}
       </View>
 
+      {/* 目標表示 */}
+      {user.goals && user.goals.length > 0 && (
+        <View style={styles.goalsSection}>
+          <View style={styles.sectionHeader}>
+            <MaterialIcons name="flag" size={14} color="#ff9800" />
+            <Text style={styles.sectionTitle}>目標</Text>
+          </View>
+          <View style={styles.goalsContainer}>
+            {user.goals.slice(0, 2).map((goal: string, index: number) => (
+              <View key={index} style={styles.goalTag}>
+                <Text style={styles.goalText}>{goal}</Text>
+              </View>
+            ))}
+            {user.goals.length > 2 && (
+              <View style={styles.goalTag}>
+                <Text style={styles.goalText}>+{user.goals.length - 2}</Text>
+              </View>
+            )}
+          </View>
+        </View>
+      )}
+
+      {/* 科目表示 */}
       <View style={styles.subjectsContainer}>
         {user.subjects.slice(0, 3).map((subject: string, index: number) => (
           <View key={index} style={styles.subjectTag}>
@@ -204,6 +285,14 @@ export default function SearchScreen() {
           </View>
         )}
       </View>
+
+      {/* 目標が似ている場合の表示 */}
+      {selectedFilter === 'recommended' && user.goals && (
+        <View style={styles.recommendedBadge}>
+          <MaterialIcons name="star" size={14} color="#ff9800" />
+          <Text style={styles.recommendedText}>目標が似ています</Text>
+        </View>
+      )}
     </TouchableOpacity>
   );
 
@@ -247,38 +336,25 @@ export default function SearchScreen() {
               すべて
             </Text>
           </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              selectedFilter === 'students' && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedFilter('students')}
-          >
-            <Text
+          {userProfile && userProfile.goals && userProfile.goals.length > 0 && (
+            <TouchableOpacity
               style={[
-                styles.filterButtonText,
-                selectedFilter === 'students' && styles.filterButtonTextActive,
+                styles.filterButton,
+                selectedFilter === 'recommended' && styles.filterButtonActive,
               ]}
+              onPress={() => setSelectedFilter('recommended')}
             >
-              学生
-            </Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={[
-              styles.filterButton,
-              selectedFilter === 'teachers' && styles.filterButtonActive,
-            ]}
-            onPress={() => setSelectedFilter('teachers')}
-          >
-            <Text
-              style={[
-                styles.filterButtonText,
-                selectedFilter === 'teachers' && styles.filterButtonTextActive,
-              ]}
-            >
-              講師
-            </Text>
-          </TouchableOpacity>
+              <Text
+                style={[
+                  styles.filterButtonText,
+                  selectedFilter === 'recommended' &&
+                    styles.filterButtonTextActive,
+                ]}
+              >
+                おすすめ
+              </Text>
+            </TouchableOpacity>
+          )}
         </View>
       </View>
 
@@ -475,6 +551,49 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#1976d2',
     fontWeight: '500',
+  },
+  goalTag: {
+    backgroundColor: '#e8eaf6',
+  },
+  goalText: {
+    color: '#5c6bc0',
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  goalsSection: {
+    marginBottom: 12,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  sectionTitle: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#ff9800',
+    marginLeft: 4,
+  },
+  goalsContainer: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  recommendedBadge: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#fff3e0',
+    paddingHorizontal: 8,
+    paddingVertical: 4,
+    borderRadius: 12,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+  },
+  recommendedText: {
+    fontSize: 12,
+    color: '#ff9800',
+    fontWeight: '600',
+    marginLeft: 4,
   },
   emptyState: {
     alignItems: 'center',
